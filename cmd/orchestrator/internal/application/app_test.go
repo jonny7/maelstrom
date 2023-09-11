@@ -1,4 +1,4 @@
-package http
+package application
 
 import (
 	"net/http"
@@ -10,7 +10,7 @@ func TestHealthHandler(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 
-	healthHandler().ServeHTTP(recorder, req)
+	Application{}.HealthHandler().ServeHTTP(recorder, req)
 
 	want := 204
 	got := recorder.Code
