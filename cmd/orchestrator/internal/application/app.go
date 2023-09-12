@@ -5,19 +5,12 @@ import (
 	"os"
 )
 
-type Application struct {
-	Logger *zerolog.Logger
+type App struct {
+	Logger zerolog.Logger
 }
 
-func New() Application {
-	logger := zerolog.New(os.Stdout).With().Str("service", "maelstrom gateway").Timestamp().Logger()
-
-	return Application{
-		Logger: &logger,
+func New() App {
+	return App{
+		Logger: zerolog.New(os.Stdout).With().Str("service", "maelstrom gateway").Timestamp().Logger(),
 	}
-
-}
-
-func (a Application) HealthHandler() bool {
-	return true
 }

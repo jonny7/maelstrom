@@ -1,5 +1,5 @@
 package gateway
 
-type Orchestrator interface {
-	HealthHandler() bool
-}
+//type Orchestrator interface {
+//	HealthHandler() bool
+//}
