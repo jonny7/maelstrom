@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/application"
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/application/config"
-	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/application/gateway"
 	"github.com/rs/zerolog"
 	"net/http"
 	"os"
@@ -16,16 +15,15 @@ import (
 )
 
 type Server struct {
-	app        gateway.Orchestrator
+	app        application.App
 	Logger     zerolog.Logger
 	HttpServer *http.Server
 }
 
-func New(app application.Application, cfg config.Config) Server {
-	logger := zerolog.New(os.Stdout).With().Str("service", "maelstrom orchestrator").Timestamp().Logger()
+func New(app application.App, cfg config.Config) Server {
 	srv := Server{app: app}
-	srv.HttpServer = &http.Server{Addr: fmt.Sprintf("%s:%d", cfg.Host, cfg.Port), Handler: srv.routes()}
-	srv.Logger = logger
+	srv.HttpServer = &http.Server{Addr: cfg.HttpAddress(), Handler: srv.routes()}
+	srv.Logger = zerolog.New(os.Stdout).With().Str("service", "maelstrom orchestrator").Timestamp().Logger()
 	return srv
 }
 
@@ -56,14 +54,12 @@ func (s Server) Run() error {
 func (s Server) routes() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
-	r.Get("/health", s.HealthHandler())
+	r.Get("/health", s.healthHandler())
 	return r
 }
 
-func (s Server) HealthHandler() http.HandlerFunc {
+func (s Server) healthHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.Logger.Info().Msgf("%t", s.app.HealthHandler())
-		w.Write([]byte("yes"))
 		w.WriteHeader(204)
 	}
 }
