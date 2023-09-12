@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driver/http"
-	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/application/config"
+	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driver/http/config"
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/application/services"
 	"github.com/rs/zerolog/log"
 )
