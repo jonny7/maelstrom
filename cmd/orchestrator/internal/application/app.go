@@ -1,16 +1,21 @@
 package application
 
 import (
-	"github.com/rs/zerolog"
-	"os"
+	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/application/domain/worker"
 )
 
 type App struct {
-	Logger zerolog.Logger
+	//Logger     zerolog.Logger
+	Subscriber worker.Subscriber
 }
 
 func New() App {
+	//logger := zerolog.New(os.Stdout).With().Str("service", "maelstrom gateway").Timestamp().Logger()
+
+	subscribe, _ := worker.NewSubscriber(worker.InMemory)
+
 	return App{
-		Logger: zerolog.New(os.Stdout).With().Str("service", "maelstrom gateway").Timestamp().Logger(),
+		//	Logger:     logger,
+		Subscriber: subscribe,
 	}
 }

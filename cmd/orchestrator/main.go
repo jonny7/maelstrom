@@ -16,7 +16,7 @@ func main() {
 	app := services.NewApplication()
 	server := http.New(app, *cfg)
 
-	if se := server.Run(); err != nil {
+	if se := server.Run(); se != nil {
 		log.Error().Err(se).Send()
 	}
 }
