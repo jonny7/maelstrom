@@ -5,14 +5,13 @@ import (
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driven/subscriber/inmem"
 )
 
-type Subscriber interface {
-	// Subscribe()
-	Pop(remoteAddr string) error
-	Push(remoteAddr string) error
+type Store interface {
+	Add(worker string) error
+	Remove(worker string) error
 	List() []string
 }
 
-func NewSubscriber(method SubscriberStore) (Subscriber, error) {
+func newSubscriberStore(method SubscriberStore) (Store, error) {
 	switch method {
 	case InMemory:
 		return inmem.NewInMemoryRepository(), nil

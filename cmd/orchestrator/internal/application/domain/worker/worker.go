@@ -1,9 +1,5 @@
 package worker
 
-import (
-	"net"
-)
-
 // SubscriberStore is the available type of subscribing stores
 type SubscriberStore string
 
@@ -12,7 +8,7 @@ const (
 )
 
 type worker struct {
-	ip net.IP
+	ip string
 }
 
 type Workers struct {

@@ -6,7 +6,7 @@ import (
 
 func TestInMemorySubscriberPush(t *testing.T) {
 	inmem := NewInMemoryRepository()
-	if err := inmem.Push("127.0.0.1"); err != nil {
+	if err := inmem.Add("127.0.0.1"); err != nil {
 		t.Error(err)
 	}
 	nodeListLength := len(inmem.nodeList)
