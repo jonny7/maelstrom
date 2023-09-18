@@ -7,10 +7,19 @@ const (
 	InMemory SubscriberStore = "in-memory"
 )
 
+type Workers struct {
+	Workers []worker
+}
+
 type worker struct {
 	ip string
 }
 
-type Workers struct {
-	Workers []worker
+func (w Workers) Contains(ip string) bool {
+	for _, work := range w.Workers {
+		if ip == work.ip {
+			return true
+		}
+	}
+	return false
 }
