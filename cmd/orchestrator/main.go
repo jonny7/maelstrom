@@ -1,44 +1,22 @@
 package main
 
 import (
-	"context"
-	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/config"
-	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/http"
+	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driver/http"
+	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driver/http/config"
+	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/application/services"
 	"github.com/rs/zerolog/log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
-	cfg, cfgErr := config.New()
-	if cfgErr != nil {
-		log.Fatal().Err(cfgErr).Send()
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatal().Err(err).Send()
 	}
 
-	srv := http.New(*cfg)
+	app := services.NewApplication()
+	server := http.New(app, *cfg)
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	errs := run(srv)
-
-	select {
-	case signals := <-sigs:
-		srv.Logger.Info().Msgf("shutting down from signal: %v", signals)
-		if err := srv.HttpServer.Shutdown(context.Background()); err != nil {
-			srv.Logger.Err(err).Send()
-		}
-	case err := <-errs:
-		srv.Logger.Error().Err(err).Msg("returning from ListenAndServe: %v")
+	if se := server.Run(); se != nil {
+		log.Error().Err(se).Send()
 	}
-}
-
-func run(srv http.Server) <-chan error {
-	ch := make(chan error)
-	go func() {
-		srv.Logger.Info().Msgf("starting server on: %s", srv.HttpServer.Addr)
-		ch <- srv.HttpServer.ListenAndServe()
-		close(ch)
-	}()
-	return ch
 }

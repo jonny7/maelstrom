@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package worker;
+
+option go_package = "github.com/jonny7/maelstrom/api/common/worker";
+
+import "google/protobuf/timestamp.proto";
+
+service WorkerService {
+}
+
+message IsHourAvailableRequest {
+  google.protobuf.Timestamp time = 1;
+}
