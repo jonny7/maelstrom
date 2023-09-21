@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/application"
