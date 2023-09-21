@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driver/http"
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driver/http/config"
-	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/application/services"
+	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/service"
 	"github.com/rs/zerolog/log"
 )
 
@@ -13,7 +13,7 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 
-	app := services.NewApplication()
+	app := service.NewApplication()
 	server := http.New(app, *cfg)
 
 	if se := server.Run(); se != nil {

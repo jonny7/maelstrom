@@ -20,6 +20,9 @@ type Server struct {
 	httpServer *http.Server
 }
 
+// @todo think about this so its nice
+//var _ api.API = (*Server)(nil)
+
 func New(app application.App, cfg config.Config) Server {
 	srv := Server{app: app}
 	srv.httpServer = &http.Server{Addr: cfg.HttpAddress(), Handler: srv.routes()}
