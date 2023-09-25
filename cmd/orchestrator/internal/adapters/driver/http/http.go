@@ -76,7 +76,7 @@ func (s Server) listSubscribers() http.HandlerFunc {
 func (s Server) createSubscriber() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.logger.Info().Msgf("received subscription from: %s", r.RemoteAddr)
-		if err := s.app.Subscriber.Add(r.RemoteAddr); err != nil {
+		if err := s.app.Subscriber.AddWorker(r.RemoteAddr); err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.Respond(w, r, nil)
 		}
