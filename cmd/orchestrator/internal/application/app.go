@@ -1,23 +1,21 @@
 package application
 
 import (
-	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driven/subscriber/inmem"
+	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/domain/worker"
 	"github.com/rs/zerolog"
 	"os"
 )
 
 type App struct {
 	Logger     zerolog.Logger
-	Subscriber *inmem.InMemorySubscriber
+	Subscriber worker.Service
 }
 
-func New() App {
+func New(store worker.Store) App {
 	logger := zerolog.New(os.Stdout).With().Str("service", "maelstrom application").Timestamp().Logger()
-
-	workerRepository := inmem.NewInMemoryRepository()
 
 	return App{
 		Logger:     logger,
-		Subscriber: workerRepository,
+		Subscriber: worker.NewService(store),
 	}
 }

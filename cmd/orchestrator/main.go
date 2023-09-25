@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driven/subscriber/inmem"
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driver/http"
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/adapters/driver/http/config"
 	"github.com/jonny7/maelstrom/cmd/orchestrator/internal/service"
@@ -13,7 +14,9 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 
-	app := service.NewApplication()
+	store := inmem.NewInMemoryRepository()
+	app := service.NewApplication(store)
+
 	server := http.New(app, *cfg)
 
 	if se := server.Run(); se != nil {
