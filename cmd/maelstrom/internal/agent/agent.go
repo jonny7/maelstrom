@@ -3,6 +3,7 @@ package agent
 import (
 	"fmt"
 	"github.com/caarlos0/env/v9"
+	"github.com/hashicorp/serf/serf"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/discovery"
 	"github.com/soheilhy/cmux"
 	"log"
@@ -37,6 +38,10 @@ type Agent struct {
 	// shutdowns receive channel events, signifying it should be shut down
 	shutdowns    chan struct{}
 	shutdownLock sync.Mutex
+}
+
+func (a *Agent) Members() []serf.Member {
+	return a.membership.Members()
 }
 
 // RPCAddr splits the provided BindAddress to the HOST and combines the RPC_PORT

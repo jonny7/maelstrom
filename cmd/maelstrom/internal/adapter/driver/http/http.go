@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/render"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/http/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
 	"github.com/rs/zerolog"
@@ -53,12 +54,21 @@ func (s Server) Run() error {
 func (s Server) routes() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
-	r.Get("/health", s.healthHandler())
+	r.Use(render.SetContentType(render.ContentTypeJSON))
+	r.Get("/healthz", s.healthHandler())
+	r.Get("/api/members", s.members())
 	return r
 }
 
 func (s Server) healthHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(204)
+	}
+}
+
+func (s Server) members() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		members := s.app.Agent.Members()
+		render.Respond(w, r, members)
 	}
 }
