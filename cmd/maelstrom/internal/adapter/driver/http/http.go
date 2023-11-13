@@ -1,0 +1,123 @@
+package http
+
+import (
+	"context"
+	"fmt"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/render"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/http/config"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
+	"github.com/rs/zerolog"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+type Server struct {
+	app    application.App
+	logger zerolog.Logger
+	config config.Config
+}
+
+func New(app application.App, cfg config.Config) Server {
+	srv := Server{app: app, config: cfg}
+	srv.logger = zerolog.New(os.Stdout).With().Str("service", "maelstrom server").Timestamp().Logger()
+	return srv
+}
+
+// setupMiddlewares applies various middlewares to chi
+func setupMiddlewares(router *chi.Mux) {
+	router.Use(middleware.Recoverer)
+	router.Use(render.SetContentType(render.ContentTypeJSON))
+}
+
+func (s Server) setupRoutes(router *chi.Mux) {
+	router.Get("/healthz", s.Health)
+	router.Get("/members", s.Members)
+	router.Post("/scale", s.Scale)
+}
+
+func (s Server) Run(mountRouter func(router chi.Router) http.Handler) {
+	// create router
+	router := chi.NewRouter()
+	setupMiddlewares(router)
+	// generate routes
+	s.setupRoutes(router)
+	// create base router
+	base := chi.NewRouter()
+	base.Mount("/api", mountRouter(router))
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	errs := make(chan error)
+	go func() {
+		s.logger.Info().Msgf("starting server on: %s:%d", s.config.Host, s.config.Port)
+		errs <- http.ListenAndServe(s.config.HttpAddress(), base)
+		close(errs)
+	}()
+
+	select {
+	case signals := <-sigs:
+		s.logger.Info().Msgf("shutting down from signal: %v", signals)
+	case err := <-errs:
+		s.logger.Err(err).Msgf("returning from ListenAndServe: %v", err)
+	}
+}
+
+func (s Server) Health(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(204)
+}
+
+func (s Server) Members(w http.ResponseWriter, r *http.Request) {
+	members := s.app.Agent.Members()
+	render.Respond(w, r, members)
+}
+
+func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
+	var newScale maelstrom.Scale
+	if err := render.Decode(r, &newScale); err != nil {
+		render.Status(r, http.StatusBadRequest)
+		render.Respond(w, r, maelstrom.Error{Message: "unable to decode body"})
+		return
+	}
+
+	cfg, buildErr := clientcmd.BuildConfigFromFlags("", "")
+	if buildErr != nil {
+		render.Status(r, http.StatusInternalServerError)
+		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", buildErr)})
+	}
+
+	clientSet, cfgErr := kubernetes.NewForConfig(cfg)
+	if cfgErr != nil {
+		render.Status(r, http.StatusInternalServerError)
+		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", cfgErr)})
+	}
+
+	cur, getErr := clientSet.AppsV1().
+		StatefulSets(s.config.K8s.Namespace).
+		GetScale(context.Background(), "maelstrom", metav1.GetOptions{})
+	if getErr != nil {
+		render.Status(r, http.StatusInternalServerError)
+		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", cfgErr)})
+	}
+
+	sc := *cur
+	sc.Spec.Replicas = int32(newScale.NumberOfWorkers)
+
+	_, err := clientSet.AppsV1().
+		StatefulSets(s.config.K8s.Namespace).
+		UpdateScale(context.Background(), "maelstrom", &sc, metav1.UpdateOptions{})
+	if err != nil {
+		render.Status(r, http.StatusInternalServerError)
+		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", err)})
+	}
+
+	render.Status(r, http.StatusAccepted)
+}
