@@ -1,0 +1,88 @@
+openapi: "3.0.0"
+info:
+  version: 0.0.1
+  title: Maelstrom members
+  description: |
+    open-api spec for Maelstrom
+servers:
+  - url: https://{hostname}/api
+    variables:
+      hostname:
+        default: 0.0.0.0
+paths:
+  /members:
+    get:
+      operationId: members
+      responses:
+        '200':
+          description: get the current set of maelstrom users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /healthz:
+    get:
+      operationId: health
+      responses:
+        '204':
+          description: |
+            kubernetes healthchecks
+        default:
+          description: error obtaining health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /scale:
+    post:
+      operationId: scale
+      requestBody:
+        description: |
+          scale the number of members through K8s API
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scale'
+      responses:
+        '204':
+          description: |
+            kubernetes healthchecks
+        default:
+          description: error obtaining health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Member:
+      type: object
+      properties:
+        Name:
+          type: string
+        Addr:
+          type: string
+        Port:
+          type: integer
+        Tags:
+          type: array
+    Scale:
+      type: object
+      required: [numberOfWorkers]
+      properties:
+        numberOfWorkers:
+          type: integer
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string

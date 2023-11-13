@@ -1,10 +1,13 @@
 package main
 
 import (
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/http"
+	"github.com/go-chi/chi/v5"
+	h "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/http"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/http/config"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
 	"github.com/rs/zerolog/log"
+	"net/http"
 )
 
 func main() {
@@ -15,9 +18,9 @@ func main() {
 
 	app := service.NewApplication()
 
-	server := http.New(app, *cfg)
+	server := h.New(app, *cfg)
 
-	if se := server.Run(); se != nil {
-		log.Error().Err(se).Send()
-	}
+	server.Run(func(router chi.Router) http.Handler {
+		return maelstrom.HandlerFromMux(server, chi.NewRouter())
+	})
 }
