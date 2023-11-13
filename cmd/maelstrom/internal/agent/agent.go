@@ -5,10 +5,9 @@ import (
 	"github.com/caarlos0/env/v9"
 	"github.com/hashicorp/serf/serf"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/discovery"
+	"github.com/rs/zerolog/log"
 	"github.com/soheilhy/cmux"
-	"log"
 	"net"
-	"sync"
 )
 
 type Config struct {
@@ -36,8 +35,8 @@ type Agent struct {
 	// membership configures Serf and eventing
 	membership *discovery.Membership
 	// shutdowns receive channel events, signifying it should be shut down
-	shutdowns    chan struct{}
-	shutdownLock sync.Mutex
+	shutdowns chan struct{}
+	//shutdownLock sync.Mutex @todo make this graceful
 }
 
 func (a *Agent) Members() []serf.Member {
@@ -75,8 +74,13 @@ func New() (*Agent, error) {
 	if err := a.setupMux(); err != nil {
 		return nil, err
 	}
-	// serve mux @todo handle err
-	go a.serve()
+	// multiplex port
+	go func() {
+		err := a.serve()
+		if err != nil {
+			log.Error().Err(err).Send()
+		}
+	}()
 	return a, nil
 }
 
@@ -84,12 +88,12 @@ func New() (*Agent, error) {
 type b struct{}
 
 func (b b) Join(name, addr string) error {
-	log.Println(name, addr, "joining")
+	log.Info().Msgf("%s with address %s is joining", name, addr)
 	return nil
 }
 
 func (b b) Leave(name string) error {
-	log.Println(name, "joining")
+	log.Info().Msgf("%s is leaving", name)
 	return nil
 }
 
@@ -113,7 +117,7 @@ func (a *Agent) setupMembership() error {
 // serve serves multiplexed TCP and UDP protocols across a single port
 func (a *Agent) serve() error {
 	if err := a.Mux.Serve(); err != nil {
-		log.Println("shutting down serf ports")
+		log.Error().Err(err).Msg("serf is shutting down")
 		return err
 	}
 	return nil

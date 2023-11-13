@@ -87,25 +87,31 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 		render.Respond(w, r, maelstrom.Error{Message: "unable to decode body"})
 		return
 	}
-	cfg, err := clientcmd.BuildConfigFromFlags("", "")
-	if err != nil {
+
+	cfg, buildErr := clientcmd.BuildConfigFromFlags("", "")
+	if buildErr != nil {
 		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", err)})
-	}
-	clientSet, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", err)})
+		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", buildErr)})
 	}
 
-	cur, err := clientSet.AppsV1().
+	clientSet, cfgErr := kubernetes.NewForConfig(cfg)
+	if cfgErr != nil {
+		render.Status(r, http.StatusInternalServerError)
+		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", cfgErr)})
+	}
+
+	cur, getErr := clientSet.AppsV1().
 		StatefulSets(s.config.K8s.Namespace).
 		GetScale(context.Background(), "maelstrom", metav1.GetOptions{})
+	if getErr != nil {
+		render.Status(r, http.StatusInternalServerError)
+		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", cfgErr)})
+	}
 
 	sc := *cur
 	sc.Spec.Replicas = int32(newScale.NumberOfWorkers)
 
-	_, err = clientSet.AppsV1().
+	_, err := clientSet.AppsV1().
 		StatefulSets(s.config.K8s.Namespace).
 		UpdateScale(context.Background(), "maelstrom", &sc, metav1.UpdateOptions{})
 	if err != nil {
@@ -114,5 +120,4 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Status(r, http.StatusAccepted)
-	return
 }
