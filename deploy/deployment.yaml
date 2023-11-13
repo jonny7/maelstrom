@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: maelstrom
+spec:
+  serviceName: "maelstrom-svc"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: maelstrom
+  template:
+    metadata:
+      labels:
+        app: maelstrom
+    spec:
+      containers:
+        - name: maelstrom
+          image: localhost:50770/jonny/maelstrom
+          imagePullPolicy: Never
+#          livenessProbe:
+#            httpGet:
+#              path: /healthz
+#              port: 3000
+          ports:
+            - containerPort: 7373
+              name: rpc
+            - containerPort: 7946
+              name: serf
+            - containerPort: 3000
+              name: api
