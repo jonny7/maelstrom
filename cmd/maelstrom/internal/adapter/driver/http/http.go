@@ -3,6 +3,11 @@ package http
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
@@ -13,10 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 type Server struct {
@@ -39,7 +40,7 @@ func setupMiddlewares(router *chi.Mux) {
 
 func (s Server) setupRoutes(router *chi.Mux) {
 	router.Get("/healthz", s.Health)
-	router.Get("/members", s.Members)
+	router.Get("/nodes", s.Nodes)
 	router.Post("/scale", s.Scale)
 }
 
@@ -75,7 +76,7 @@ func (s Server) Health(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(204)
 }
 
-func (s Server) Members(w http.ResponseWriter, r *http.Request) {
+func (s Server) Nodes(w http.ResponseWriter, r *http.Request) {
 	members := s.app.Agent.Members()
 	render.Respond(w, r, members)
 }
@@ -109,7 +110,7 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sc := *cur
-	sc.Spec.Replicas = int32(newScale.NumberOfWorkers)
+	sc.Spec.Replicas = int32(*newScale.NumberOfWorkers)
 
 	_, err := clientSet.AppsV1().
 		StatefulSets(s.config.K8s.Namespace).

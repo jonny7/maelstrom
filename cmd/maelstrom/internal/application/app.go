@@ -1,9 +1,10 @@
 package application
 
 import (
+	"os"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/agent"
 	"github.com/rs/zerolog"
-	"os"
 )
 
 type App struct {
