@@ -8,8 +8,8 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// Member defines model for Member.
-type Member struct {
+// Node defines model for Node.
+type Node struct {
 	Addr *string        `json:"Addr,omitempty"`
 	Name *string        `json:"Name,omitempty"`
 	Port *int           `json:"Port,omitempty"`
@@ -18,7 +18,7 @@ type Member struct {
 
 // Scale defines model for Scale.
 type Scale struct {
-	NumberOfWorkers int `json:"numberOfWorkers"`
+	NumberOfWorkers *int `json:"number_of_workers,omitempty"`
 }
 
 // ScaleJSONRequestBody defines body for Scale for application/json ContentType.
