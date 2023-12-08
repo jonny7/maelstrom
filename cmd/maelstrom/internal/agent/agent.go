@@ -2,12 +2,15 @@ package agent
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/caarlos0/env/v9"
 	"github.com/hashicorp/serf/serf"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/discovery"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/commander"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/membership"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/soheilhy/cmux"
-	"net"
 )
 
 type Config struct {
@@ -30,10 +33,12 @@ type Config struct {
 type Agent struct {
 	// Config is the agents configuration
 	Config Config
-	// Mux helps serve UDP & TCP over the same port
-	Mux cmux.CMux
+	// Commander is a raft based set of changes to apply across the Maelstrom nodes
+	commander *commander.Commander
+	// mux helps serve UDP & TCP over the same port
+	mux cmux.CMux
 	// membership configures Serf and eventing
-	membership *discovery.Membership
+	membership *membership.Membership
 	// shutdowns receive channel events, signifying it should be shut down
 	shutdowns chan struct{}
 	//shutdownLock sync.Mutex @todo make this graceful
@@ -54,7 +59,7 @@ func (c Config) RPCAddr() (string, error) {
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
 // The agent will also set up all membership for the Serf cluster
-func New() (*Agent, error) {
+func New(logger zerolog.Logger) (*Agent, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
@@ -66,10 +71,13 @@ func New() (*Agent, error) {
 		shutdowns: make(chan struct{}),
 	}
 
-	// setup membership or err
-	if err := a.setupMembership(); err != nil {
-		return nil, err
+	// create commander
+	cmdr, err := commander.NewCommander(commander.Config{})
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to create commander")
 	}
+	a.commander = cmdr
+
 	// setup mux or err
 	if err := a.setupMux(); err != nil {
 		return nil, err
@@ -78,45 +86,38 @@ func New() (*Agent, error) {
 	go func() {
 		err := a.serve()
 		if err != nil {
-			log.Error().Err(err).Send()
+			logger.Error().Err(err).Send()
 		}
 	}()
+
+	// setup membership or err
+	if err := a.setupMembership(logger); err != nil {
+		return nil, err
+	}
 	return a, nil
 }
 
-// @todo replace this will application structure
-type b struct{}
-
-func (b b) Join(name, addr string) error {
-	log.Info().Msgf("%s with address %s is joining", name, addr)
-	return nil
-}
-
-func (b b) Leave(name string) error {
-	log.Info().Msgf("%s is leaving", name)
-	return nil
-}
-
 // setupMembership configures the membership for this Serf node or errors
-func (a *Agent) setupMembership() error {
+func (a *Agent) setupMembership(logger zerolog.Logger) error {
 	rpcAddr, err := a.Config.RPCAddr()
 	if err != nil {
 		return err
 	}
-	a.membership, err = discovery.New(b{}, discovery.Config{
+
+	a.membership, err = membership.New(a.commander, membership.Config{
 		NodeName: a.Config.NodeName,
 		BindAddr: a.Config.BindAddr,
 		Tags: map[string]string{
 			"rpc_addr": rpcAddr,
 		},
 		StartJoinAddrs: a.Config.StartJoinAddrs,
-	})
+	}, logger)
 	return err
 }
 
 // serve serves multiplexed TCP and UDP protocols across a single port
 func (a *Agent) serve() error {
-	if err := a.Mux.Serve(); err != nil {
+	if err := a.mux.Serve(); err != nil {
 		log.Error().Err(err).Msg("serf is shutting down")
 		return err
 	}
@@ -134,6 +135,6 @@ func (a *Agent) setupMux() error {
 	if err != nil {
 		return err
 	}
-	a.Mux = cmux.New(ln)
+	a.mux = cmux.New(ln)
 	return nil
 }

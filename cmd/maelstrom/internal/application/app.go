@@ -14,7 +14,7 @@ type App struct {
 
 func New() App {
 	logger := zerolog.New(os.Stdout).With().Str("service", "maelstrom application").Timestamp().Logger()
-	a, err := agent.New()
+	a, err := agent.New(logger)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}
