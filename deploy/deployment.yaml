@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: maelstrom
-          image: localhost:50770/jonny/maelstrom
+          image: localhost:5000/jonny/maelstrom
           imagePullPolicy: Never
           livenessProbe:
             httpGet:
