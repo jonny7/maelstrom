@@ -3,7 +3,7 @@ module github.com/jonny7/maelstrom
 go 1.21.3
 
 require (
-	github.com/caarlos0/env/v9 v9.0.0
+	github.com/caarlos0/env/v10 v10.0.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-chi/render v1.0.3
 	github.com/hashicorp/raft v1.6.0

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/caarlos0/env/v9"
+	"github.com/caarlos0/env/v10"
 	"github.com/hashicorp/serf/serf"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/commander"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/membership"
