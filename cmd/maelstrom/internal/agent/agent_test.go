@@ -1,3 +1,9 @@
-package agent
+package agent_test
 
-//start here
+import (
+	"testing"
+)
+
+func TestMaelstromAgent(t *testing.T) {
+
+}
