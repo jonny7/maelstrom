@@ -16,8 +16,8 @@ type ServerInterface interface {
 	// (GET /healthz)
 	Health(w http.ResponseWriter, r *http.Request)
 
-	// (GET /members)
-	Members(w http.ResponseWriter, r *http.Request)
+	// (GET /nodes)
+	Nodes(w http.ResponseWriter, r *http.Request)
 
 	// (POST /scale)
 	Scale(w http.ResponseWriter, r *http.Request)
@@ -32,8 +32,8 @@ func (_ Unimplemented) Health(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// (GET /members)
-func (_ Unimplemented) Members(w http.ResponseWriter, r *http.Request) {
+// (GET /nodes)
+func (_ Unimplemented) Nodes(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -66,12 +66,12 @@ func (siw *ServerInterfaceWrapper) Health(w http.ResponseWriter, r *http.Request
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// Members operation middleware
-func (siw *ServerInterfaceWrapper) Members(w http.ResponseWriter, r *http.Request) {
+// Nodes operation middleware
+func (siw *ServerInterfaceWrapper) Nodes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Members(w, r)
+		siw.Handler.Nodes(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -213,7 +213,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/healthz", wrapper.Health)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/members", wrapper.Members)
+		r.Get(options.BaseURL+"/nodes", wrapper.Nodes)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/scale", wrapper.Scale)

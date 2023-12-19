@@ -15,12 +15,12 @@ spec:
     spec:
       containers:
         - name: maelstrom
-          image: localhost:50770/jonny/maelstrom
+          image: localhost:5000/jonny/maelstrom
           imagePullPolicy: Never
-#          livenessProbe:
-#            httpGet:
-#              path: /healthz
-#              port: 3000
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 3000
           ports:
             - containerPort: 7373
               name: rpc
