@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
-	"github.com/jonny7/maelstrom/ui"
+	"github.com/jonny7/maelstrom/ui/views"
 	"github.com/rs/zerolog"
 )
 
@@ -47,6 +47,6 @@ func (u UI) setupRoutes(router *chi.Mux) {
 }
 
 func (u UI) Index(w http.ResponseWriter, req *http.Request) {
-	members := u.app.Agent.Members()
-	ui.Nodes(members).Render(req.Context(), w)
+	//members := u.app.Agent.Members()
+	views.Index().Render(req.Context(), w)
 }
