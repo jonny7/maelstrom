@@ -28,3 +28,5 @@ spec:
               name: serf
             - containerPort: 3000
               name: api
+            - containerPort: 4000
+              name: ui
