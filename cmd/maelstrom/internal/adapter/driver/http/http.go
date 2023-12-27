@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -26,9 +24,14 @@ type Server struct {
 	config config.Config
 }
 
-func New(app application.App, cfg config.Config) Server {
-	srv := Server{app: app, config: cfg}
-	srv.logger = zerolog.New(os.Stdout).With().Str("service", "maelstrom server").Timestamp().Logger()
+func New(app application.App) Server {
+	logger := zerolog.New(os.Stdout).With().Str("subsystem", "maelstrom API").Timestamp().Logger()
+	cfg, err := config.New()
+	if err != nil {
+		logger.Fatal().Err(err).Send()
+	}
+	srv := Server{app: app, config: *cfg}
+	srv.logger = logger
 	return srv
 }
 
@@ -44,32 +47,20 @@ func (s Server) setupRoutes(router *chi.Mux) {
 	router.Post("/scale", s.Scale)
 }
 
-func (s Server) Run(mountRouter func(router chi.Router) http.Handler) {
+func (s Server) Run(errs chan error, mountRouter func(router chi.Router) http.Handler) {
 	// create router
-	router := chi.NewRouter()
-	setupMiddlewares(router)
+	mux := chi.NewRouter()
+	setupMiddlewares(mux)
 	// generate routes
-	s.setupRoutes(router)
+	s.setupRoutes(mux)
 	// create base router
 	base := chi.NewRouter()
-	base.Mount("/api", mountRouter(router))
+	base.Mount("/api", mountRouter(mux))
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	errs := make(chan error)
 	go func() {
-		s.logger.Info().Msgf("starting server on: %s:%d", s.config.Host, s.config.Port)
+		s.logger.Info().Msgf("starting API on: %s", s.config.HttpAddress())
 		errs <- http.ListenAndServe(s.config.HttpAddress(), base)
-		close(errs)
 	}()
-
-	select {
-	case signals := <-sigs:
-		s.logger.Info().Msgf("shutting down from signal: %v", signals)
-	case err := <-errs:
-		s.logger.Err(err).Msgf("returning from ListenAndServe: %v", err)
-	}
 }
 
 func (s Server) Health(w http.ResponseWriter, _ *http.Request) {

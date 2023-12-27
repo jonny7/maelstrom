@@ -1,0 +1,8 @@
+package components
+
+templ Nodes(nodes []dto.Member) {
+    for _, node := range nodes {
+       <div class="border-2">
+        { node.Name } | { node.Addr } | {node.Port } | { node.Tags } | { node.Status }</div>
+      }
+}
