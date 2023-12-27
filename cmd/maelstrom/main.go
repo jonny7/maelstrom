@@ -2,26 +2,43 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"os/signal"
 
 	"github.com/go-chi/chi/v5"
 	h "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/http"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/http/config"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	cfg, err := config.New()
-	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
-
 	app := service.NewApplication()
 
-	server := h.New(app, *cfg)
+	api := h.New(app)
 
-	server.Run(func(router chi.Router) http.Handler {
-		return maelstrom.HandlerFromMux(server, chi.NewRouter())
+	errs := make(chan error)
+
+	sig := make(chan os.Signal)
+	signal.Notify(sig, os.Interrupt, os.Kill)
+
+	api.Run(errs, func(router chi.Router) http.Handler {
+		return maelstrom.HandlerFromMux(api, router)
 	})
+
+	// @todo headless
+	u := ui.New(app)
+	u.Run(errs, func(router chi.Router) http.Handler {
+		return maelstrom.HandlerFromMux(u, router)
+	})
+
+	for {
+		select {
+		case <-sig:
+			log.Info().Msgf("shutting down from signal: %v", sig)
+		case err := <-errs:
+			log.Err(err).Msgf("returning from ListenAndServe: %v", err)
+		}
+	}
 }

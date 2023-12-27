@@ -3,6 +3,7 @@ module github.com/jonny7/maelstrom
 go 1.21.5
 
 require (
+	github.com/a-h/templ v0.2.476
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-chi/render v1.0.3
@@ -32,7 +33,6 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
