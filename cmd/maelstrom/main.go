@@ -6,17 +6,20 @@ import (
 	"os/signal"
 
 	"github.com/go-chi/chi/v5"
-	h "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/http"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
+	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
+	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	app := service.NewApplication()
 
-	api := h.New(app)
+	consumer := kafka.Kafka{}
+	app := service.NewApplication(consumer)
+
+	api := a.New(app)
 
 	errs := make(chan error)
 
@@ -28,9 +31,9 @@ func main() {
 	})
 
 	// @todo headless
-	u := ui.New(app)
-	u.Run(errs, func(router chi.Router) http.Handler {
-		return maelstrom.HandlerFromMux(u, router)
+	ui := u.New(app)
+	ui.Run(errs, func(router chi.Router) http.Handler {
+		return maelstrom.HandlerFromMux(ui, router)
 	})
 
 	for {
