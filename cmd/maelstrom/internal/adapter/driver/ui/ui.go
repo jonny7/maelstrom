@@ -6,8 +6,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/dto"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
+	"github.com/jonny7/maelstrom/ui/components"
 	"github.com/jonny7/maelstrom/ui/views"
 	"github.com/rs/zerolog"
 )
@@ -16,6 +18,16 @@ type UI struct {
 	app    application.App
 	cfg    config.Config
 	logger zerolog.Logger
+}
+
+func (u UI) Health(w http.ResponseWriter, r *http.Request) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u UI) Scale(w http.ResponseWriter, r *http.Request) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func New(app application.App) UI {
@@ -29,24 +41,33 @@ func New(app application.App) UI {
 	return srv
 }
 
-func (u UI) Run(errs chan error) {
+func (u UI) Run(errs chan error, mountRouter func(router chi.Router) http.Handler) {
 	// create router
-	router := chi.NewRouter()
-	router.Use(middleware.Recoverer)
+	mux := chi.NewRouter()
+	mux.Use(middleware.Recoverer)
 	// generate routes
-	u.setupRoutes(router)
+	u.setupRoutes(mux)
 
 	go func() {
 		u.logger.Info().Msgf("starting UI on: %s", u.cfg.HttpAddress())
-		errs <- http.ListenAndServe(u.cfg.HttpAddress(), router)
+		errs <- http.ListenAndServe(u.cfg.HttpAddress(), mountRouter(mux))
 	}()
 }
 
 func (u UI) setupRoutes(router *chi.Mux) {
 	router.Get("/", u.Index)
+	router.Get("/nodes", u.Nodes)
 }
 
 func (u UI) Index(w http.ResponseWriter, req *http.Request) {
-	//members := u.app.Agent.Members()
-	views.Index().Render(req.Context(), w)
+	if err := views.Index().Render(req.Context(), w); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (u UI) Nodes(w http.ResponseWriter, req *http.Request) {
+	nodes := dto.MemberDTO(u.app.Agent.Members())
+	if err := components.Nodes(nodes).Render(req.Context(), w); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }

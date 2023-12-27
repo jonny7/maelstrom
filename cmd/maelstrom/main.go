@@ -24,13 +24,14 @@ func main() {
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
 	api.Run(errs, func(router chi.Router) http.Handler {
-		return maelstrom.HandlerFromMux(api, chi.NewRouter())
+		return maelstrom.HandlerFromMux(api, router)
 	})
 
 	// @todo headless
 	u := ui.New(app)
-
-	u.Run(errs)
+	u.Run(errs, func(router chi.Router) http.Handler {
+		return maelstrom.HandlerFromMux(u, router)
+	})
 
 	for {
 		select {

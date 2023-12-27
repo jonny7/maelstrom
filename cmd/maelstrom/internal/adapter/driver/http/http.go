@@ -49,13 +49,13 @@ func (s Server) setupRoutes(router *chi.Mux) {
 
 func (s Server) Run(errs chan error, mountRouter func(router chi.Router) http.Handler) {
 	// create router
-	router := chi.NewRouter()
-	setupMiddlewares(router)
+	mux := chi.NewRouter()
+	setupMiddlewares(mux)
 	// generate routes
-	s.setupRoutes(router)
+	s.setupRoutes(mux)
 	// create base router
 	base := chi.NewRouter()
-	base.Mount("/api", mountRouter(router))
+	base.Mount("/api", mountRouter(mux))
 
 	go func() {
 		s.logger.Info().Msgf("starting API on: %s", s.config.HttpAddress())
