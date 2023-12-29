@@ -3,8 +3,8 @@ package application
 import (
 	"os"
 
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/agent"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/commander"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	"github.com/rs/zerolog"
 )
 

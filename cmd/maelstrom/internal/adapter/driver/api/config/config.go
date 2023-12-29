@@ -23,8 +23,8 @@ func (c Config) HttpAddress() string {
 func New() (*Config, error) {
 	var cfg Config
 	opts := env.Options{Prefix: "API_"}
-	if err := env.ParseWithOptions(cfg, opts); err != nil {
-		return nil, fmt.Errorf("config failed to load: %w", err)
+	if err := env.ParseWithOptions(&cfg, opts); err != nil {
+		return nil, fmt.Errorf("api config failed to load: %w", err)
 	}
 	return &cfg, nil
 }

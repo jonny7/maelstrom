@@ -6,8 +6,8 @@ import (
 
 	"github.com/caarlos0/env/v10"
 	"github.com/hashicorp/serf/serf"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/commander"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/membership"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/soheilhy/cmux"
@@ -53,12 +53,12 @@ func New(logger zerolog.Logger, consumer commander.Consumer) (*Agent, error) {
 	a.commander = cmdr
 
 	// setup mux or err
-	if err := a.setupMux(); err != nil {
+	if err = a.setupMux(); err != nil {
 		return nil, err
 	}
 	// multiplex port
 	go func() {
-		err := a.serve()
+		err = a.serve()
 		if err != nil {
 			logger.Error().Err(err).Send()
 		}

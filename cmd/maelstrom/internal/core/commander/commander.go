@@ -17,7 +17,7 @@ type Commander struct {
 
 type Consumer interface {
 	Consume()
-	//Closer()
+	Close()
 }
 
 // Leave returns the attempted raft removal of the node
@@ -35,6 +35,11 @@ func NewCommander(cfg Config, consumer Consumer) (*Commander, error) {
 		config:   cfg,
 		consumer: consumer,
 	}
+
+	go func() {
+		consumer.Consume()
+	}()
+
 	return cmdr, nil
 }
 

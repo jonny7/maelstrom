@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/commander"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 )
 
 type Config struct {

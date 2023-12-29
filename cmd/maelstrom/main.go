@@ -15,9 +15,13 @@ import (
 )
 
 func main() {
+	client, err := kafka.New()
+	if err != nil {
+		log.Fatal().Err(err).Send()
+	}
+	defer client.Close()
 
-	consumer := kafka.Kafka{}
-	app := service.NewApplication(consumer)
+	app := service.NewApplication(client)
 
 	api := a.New(app)
 
@@ -40,7 +44,7 @@ func main() {
 		select {
 		case <-sig:
 			log.Info().Msgf("shutting down from signal: %v", sig)
-		case err := <-errs:
+		case err = <-errs:
 			log.Err(err).Msgf("returning from ListenAndServe: %v", err)
 		}
 	}

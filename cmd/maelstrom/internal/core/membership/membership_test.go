@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/travisjeffery/go-dynaport"
 
-	. "github.com/jonny7/maelstrom/cmd/maelstrom/internal/membership"
+	. "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 	"github.com/stretchr/testify/require"
 )
 
