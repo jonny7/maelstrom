@@ -1,5 +1,7 @@
 package agent
 
+//go:generate mockgen -source agent.go -destination mocks/mock_agent.go
+
 import (
 	"fmt"
 	"net"
@@ -13,9 +15,9 @@ import (
 	"github.com/soheilhy/cmux"
 )
 
-type Agent struct {
+type agent struct {
 	// Config is the agents configuration
-	Config Config
+	config Config
 	// Commander is a raft based set of changes to apply across the Maelstrom nodes
 	commander *commander.Commander
 	// mux helps serve UDP & TCP over the same port
@@ -27,21 +29,29 @@ type Agent struct {
 	//shutdownLock sync.Mutex @todo make this graceful
 }
 
-func (a *Agent) Members() []serf.Member {
-	return a.membership.Members()
+type Agent struct {
+	agent *agent
+}
+
+type Service interface {
+	Members() []serf.Member
+}
+
+func (a Agent) Members() []serf.Member {
+	return a.agent.membership.Members()
 }
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
 // The agent will also set up all membership for the Serf cluster
-func New(logger zerolog.Logger, consumer commander.Consumer) (*Agent, error) {
+func New(logger zerolog.Logger, consumer commander.Consumer) (Service, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
 	}
 
 	// create agent
-	a := &Agent{
-		Config:    cfg,
+	a := &agent{
+		config:    cfg,
 		shutdowns: make(chan struct{}),
 	}
 
@@ -68,29 +78,29 @@ func New(logger zerolog.Logger, consumer commander.Consumer) (*Agent, error) {
 	if err := a.setupMembership(logger); err != nil {
 		return nil, err
 	}
-	return a, nil
+	return &Agent{agent: a}, nil
 }
 
 // setupMembership configures the membership for this Serf node or errors
-func (a *Agent) setupMembership(logger zerolog.Logger) error {
-	rpcAddr, err := a.Config.RPCAddr()
+func (a *agent) setupMembership(logger zerolog.Logger) error {
+	rpcAddr, err := a.config.RPCAddr()
 	if err != nil {
 		return err
 	}
 
 	a.membership, err = membership.New(a.commander, membership.Config{
-		NodeName: a.Config.NodeName,
-		BindAddr: a.Config.BindAddr,
+		NodeName: a.config.NodeName,
+		BindAddr: a.config.BindAddr,
 		Tags: map[string]string{
 			"rpc_addr": rpcAddr,
 		},
-		StartJoinAddrs: a.Config.StartJoinAddrs,
+		StartJoinAddrs: a.config.StartJoinAddrs,
 	}, logger)
 	return err
 }
 
 // serve serves multiplexed TCP and UDP protocols across a single port
-func (a *Agent) serve() error {
+func (a *agent) serve() error {
 	if err := a.mux.Serve(); err != nil {
 		log.Error().Err(err).Msg("serf is shutting down")
 		return err
@@ -99,12 +109,12 @@ func (a *Agent) serve() error {
 }
 
 // setupMux creates a new connection multiplexer
-func (a *Agent) setupMux() error {
-	addr, err := net.ResolveTCPAddr("tcp", a.Config.BindAddr)
+func (a *agent) setupMux() error {
+	addr, err := net.ResolveTCPAddr("tcp", a.config.BindAddr)
 	if err != nil {
 		return err
 	}
-	rpcAddr := fmt.Sprintf("%s:%d", addr.IP.String(), a.Config.RPCPort)
+	rpcAddr := fmt.Sprintf("%s:%d", addr.IP.String(), a.config.RPCPort)
 	ln, err := net.Listen("tcp", rpcAddr)
 	if err != nil {
 		return err

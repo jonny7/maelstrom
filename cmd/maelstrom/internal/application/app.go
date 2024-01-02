@@ -10,7 +10,7 @@ import (
 
 type App struct {
 	Logger zerolog.Logger
-	Agent  *agent.Agent
+	Agent  agent.Service
 }
 
 func New(consumer commander.Consumer) App {

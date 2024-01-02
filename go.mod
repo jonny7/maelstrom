@@ -15,6 +15,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twmb/franz-go v1.15.4
+	go.uber.org/mock v0.4.0
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4
 )

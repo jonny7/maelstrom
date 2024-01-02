@@ -11,9 +11,10 @@ type Config struct {
 	// Hostname is the provided host for this agent, if running in K8s it's equivalent to os.GetEnv("HOSTNAME")
 	Hostname string `env:"HOSTNAME" envDefault:"0.0.0.0"`
 	// DataDir stores raft data.
-	DataDir string `env:"DATA_DIR" envDefault:"data"`
+	DataDir  string `env:"DATA_DIR" envDefault:"data"`
+	SerfPort string `env:"SERF_PORT" envDefault:"7946"`
 	// BindAddr is the address serf runs on https://www.serf.io/docs/agent/options.html#ports-used
-	BindAddr string `env:"SERF_SERVICE,expand" envDefault:"$HOSTNAME:7946"`
+	BindAddr string `env:"SERF_SERVICE,expand" envDefault:"$HOSTNAME:$SERF_PORT"`
 	// RPCPort is the port for client (and Raft) connections https://www.serf.io/docs/agent/options.html#ports-used
 	RPCPort int `env:"RPC_PORT" envDefault:"7373"`
 	// Raft server id.
