@@ -2,14 +2,22 @@ package commander
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/raft"
 	boltdb "github.com/hashicorp/raft-boltdb"
 )
 
 type Commander struct {
-	config Config
-	raft   *raft.Raft
+	config   Config
+	raft     *raft.Raft
+	consumer Consumer
+	client   http.Client
+}
+
+type Consumer interface {
+	Consume()
+	Close()
 }
 
 // Leave returns the attempted raft removal of the node
@@ -22,10 +30,16 @@ func (c *Commander) Join(id, addr string) error {
 	return nil
 }
 
-func NewCommander(cfg Config) (*Commander, error) {
+func NewCommander(cfg Config, consumer Consumer) (*Commander, error) {
 	cmdr := &Commander{
-		config: cfg,
+		config:   cfg,
+		consumer: consumer,
 	}
+
+	go func() {
+		consumer.Consume()
+	}()
+
 	return cmdr, nil
 }
 
