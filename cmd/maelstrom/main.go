@@ -1,12 +1,14 @@
 package main
 
 import (
+	_ "embed"
 	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/processor"
 	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
@@ -15,13 +17,15 @@ import (
 )
 
 func main() {
+	// @todo move to dynamic config approach
 	client, err := kafka.New()
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
 	defer client.Close()
 
-	app := service.NewApplication(client)
+	// @todo same with processor
+	app := service.NewApplication(client, processor.RequestProcessor{})
 
 	api := a.New(app)
 

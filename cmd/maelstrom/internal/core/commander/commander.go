@@ -1,22 +1,39 @@
 package commander
 
 import (
-	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/raft"
-	boltdb "github.com/hashicorp/raft-boltdb"
+	"github.com/rs/zerolog/log"
 )
 
 type Commander struct {
-	config   Config
-	raft     *raft.Raft
-	consumer Consumer
-	client   http.Client
+	config    Config
+	raft      *raft.Raft
+	consumer  Consumer
+	processor Processor
+	client    http.Client
+}
+
+type Event struct {
+	Key       []byte
+	Value     []byte
+	Headers   []Header
+	Timestamp time.Time
+}
+
+type Header struct {
+	Key   string
+	Value []byte
+}
+
+type Processor interface {
+	Process(work <-chan Event) chan *http.Request
 }
 
 type Consumer interface {
-	Consume()
+	Consume() chan Event
 	Close()
 }
 
@@ -30,24 +47,39 @@ func (c *Commander) Join(id, addr string) error {
 	return nil
 }
 
-func NewCommander(cfg Config, consumer Consumer) (*Commander, error) {
+func (c *Commander) Process(work chan Event) {
+	ch := c.processor.Process(work)
+
+	for request := range ch {
+		response, err := c.client.Do(request)
+		if err != nil {
+			log.Error().Err(err).Send()
+			continue
+		}
+		log.Info().Msgf("response code was: %d", response.StatusCode)
+	}
+}
+
+func NewCommander(cfg Config, consumer Consumer, processor Processor) (*Commander, error) {
 	cmdr := &Commander{
-		config:   cfg,
-		consumer: consumer,
+		config:    cfg,
+		consumer:  consumer,
+		processor: processor,
 	}
 
-	go func() {
-		consumer.Consume()
-	}()
+	work := consumer.Consume()
+
+	cmdr.Process(work)
 
 	return cmdr, nil
 }
 
-func newRaft() {
-	cfg := raft.DefaultConfig()
-	fmt.Print(cfg)
-	_, err := boltdb.New(boltdb.Options{})
-	if err != nil {
-		return
-	}
-}
+// @todo do later
+//func newRaft() {
+//	cfg := raft.DefaultConfig()
+//	fmt.Print(cfg)
+//	_, err := boltdb.New(boltdb.Options{})
+//	if err != nil {
+//		return
+//	}
+//}
