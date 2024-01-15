@@ -1,7 +1,5 @@
 package agent
 
-//go:generate mockgen -source agent.go -destination mocks/mock_agent.go
-
 import (
 	"fmt"
 	"net"
@@ -75,7 +73,7 @@ func New(logger zerolog.Logger, consumer commander.Consumer, processor commander
 	}()
 
 	// setup membership or err
-	if err := a.setupMembership(logger); err != nil {
+	if err = a.setupMembership(logger); err != nil {
 		return nil, err
 	}
 	return &Agent{agent: a}, nil
