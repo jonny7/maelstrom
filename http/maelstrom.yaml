@@ -61,6 +61,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /start:
+    post:
+      operationId: start
+      requestBody:
+        description: |
+         start the load test
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bool'
+      responses:
+        '200':
+          description: |
+           acknowledge the test started
+        default:
+          description: error trying to start load test
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Node:
@@ -80,6 +101,11 @@ components:
       properties:
         number_of_workers:
           type: integer
+    Bool:
+      type: object
+      properties:
+        success:
+          type: boolean
     Error:
       type: object
       required:
