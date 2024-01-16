@@ -8,12 +8,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+//go:generate mockgen -source=commander.go -destination mock_commander.go -package commander
+
 type Commander struct {
 	config    Config
 	raft      *raft.Raft
 	consumer  Consumer
 	processor Processor
-	client    http.Client
+	client    HTTPClient
 }
 
 type Event struct {
@@ -26,6 +28,10 @@ type Event struct {
 type Header struct {
 	Key   string
 	Value []byte
+}
+
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 type Processor interface {
@@ -47,31 +53,35 @@ func (c *Commander) Join(id, addr string) error {
 	return nil
 }
 
-func (c *Commander) Process(work chan Event) {
-	ch := c.processor.Process(work)
-
-	for request := range ch {
-		response, err := c.client.Do(request)
-		if err != nil {
-			log.Error().Err(err).Send()
-			continue
-		}
-		log.Info().Msgf("response code was: %d", response.StatusCode)
-	}
+func (c *Commander) Consume() chan Event {
+	return c.consumer.Consume()
 }
 
-func NewCommander(cfg Config, consumer Consumer, processor Processor) (*Commander, error) {
-	cmdr := &Commander{
+func (c *Commander) Process(work chan Event) {
+	// @todo add done chans
+	ch := c.processor.Process(work)
+	go func() {
+		defer close(ch)
+		for request := range ch {
+			response, err := c.client.Do(request)
+			if err != nil {
+				log.Error().Err(err).Send()
+				continue
+			}
+			log.Info().Msgf("response code was: %d", response.StatusCode)
+		}
+	}()
+}
+
+func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTTPClient) Commander {
+	cmdr := Commander{
 		config:    cfg,
 		consumer:  consumer,
 		processor: processor,
+		client:    client,
 	}
 
-	work := consumer.Consume()
-
-	cmdr.Process(work)
-
-	return cmdr, nil
+	return cmdr
 }
 
 // @todo do later

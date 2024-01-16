@@ -2,17 +2,28 @@ package agent
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"testing"
 
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/processor"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	"github.com/rs/zerolog"
 	"github.com/travisjeffery/go-dynaport"
+	"go.uber.org/mock/gomock"
 )
 
 func TestAgent(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	consumer := commander.NewMockConsumer(ctrl)
+	consumer.EXPECT().Consume().AnyTimes()
+	processor := commander.NewMockProcessor(ctrl)
+	processor.EXPECT().Process(1).AnyTimes()
+	httpClient := commander.NewMockHTTPClient(ctrl)
+	httpClient.EXPECT().Do(http.Request{}).AnyTimes()
+
 	for i := 0; i < 3; i++ {
 		ports := dynaport.Get(2)
 
@@ -38,7 +49,7 @@ func TestAgent(t *testing.T) {
 			}
 		}
 
-		if _, err := New(zerolog.Logger{}, driven.Nop{}, processor.NopProcessor{}); err != nil {
+		if _, err := New(zerolog.Logger{}, consumer, processor, httpClient); err != nil {
 			t.Errorf("expected no error: %v", err)
 		}
 	}

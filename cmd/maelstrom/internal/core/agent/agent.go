@@ -17,7 +17,7 @@ type agent struct {
 	// Config is the agents configuration
 	config Config
 	// Commander is a raft based set of changes to apply across the Maelstrom nodes
-	commander *commander.Commander
+	commander commander.Commander
 	// mux helps serve UDP & TCP over the same port
 	mux cmux.CMux
 	// membership configures Serf and eventing
@@ -31,8 +31,15 @@ type Agent struct {
 	agent *agent
 }
 
+func (a Agent) Start() {
+	log.Debug().Msg("starting consumer and processor")
+	ch := a.agent.commander.Consume()
+	a.agent.commander.Process(ch)
+}
+
 type Service interface {
 	Members() []serf.Member
+	Start()
 }
 
 func (a Agent) Members() []serf.Member {
@@ -41,7 +48,7 @@ func (a Agent) Members() []serf.Member {
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
 // The agent will also set up all membership for the Serf cluster
-func New(logger zerolog.Logger, consumer commander.Consumer, processor commander.Processor) (Service, error) {
+func New(logger zerolog.Logger, consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient) (Service, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
@@ -54,26 +61,22 @@ func New(logger zerolog.Logger, consumer commander.Consumer, processor commander
 	}
 
 	// create commander
-	cmdr, err := commander.NewCommander(cfg.Commander, consumer, processor)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to create commander")
-	}
-	a.commander = cmdr
+	a.commander = commander.NewCommander(cfg.Commander, consumer, processor, client)
 
 	// setup mux or err
-	if err = a.setupMux(); err != nil {
+	if err := a.setupMux(); err != nil {
 		return nil, err
 	}
 	// multiplex port
 	go func() {
-		err = a.serve()
+		err := a.serve()
 		if err != nil {
 			logger.Error().Err(err).Send()
 		}
 	}()
 
 	// setup membership or err
-	if err = a.setupMembership(logger); err != nil {
+	if err := a.setupMembership(logger); err != nil {
 		return nil, err
 	}
 	return &Agent{agent: a}, nil
@@ -86,7 +89,7 @@ func (a *agent) setupMembership(logger zerolog.Logger) error {
 		return err
 	}
 
-	a.membership, err = membership.New(a.commander, membership.Config{
+	a.membership, err = membership.New(&a.commander, membership.Config{
 		NodeName: a.config.NodeName,
 		BindAddr: a.config.BindAddr,
 		Tags: map[string]string{

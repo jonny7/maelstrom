@@ -25,7 +25,7 @@ func main() {
 	defer client.Close()
 
 	// @todo same with processor
-	app := service.NewApplication(client, processor.RequestProcessor{})
+	app := service.NewApplication(client, processor.RequestProcessor{}, &http.Client{})
 
 	api := a.New(app)
 
@@ -48,7 +48,7 @@ func main() {
 		select {
 		case <-sig:
 			log.Info().Msgf("shutting down from signal: %v", sig)
-		case err = <-errs:
+		case err := <-errs:
 			log.Err(err).Msgf("returning from ListenAndServe: %v", err)
 		}
 	}
