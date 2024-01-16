@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
@@ -32,7 +33,7 @@ func main() {
 	errs := make(chan error)
 
 	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt, os.Kill)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
 	api.Run(errs, func(router chi.Router) http.Handler {
 		return maelstrom.HandlerFromMux(api, router)

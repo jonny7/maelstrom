@@ -24,6 +24,8 @@ func (r RequestProcessor) Process(work <-chan commander.Event) chan *http.Reques
 					log.Error().Err(err).Send()
 				}
 				ch <- req
+			default:
+				return // @todo done chan
 			}
 		}
 	}()
