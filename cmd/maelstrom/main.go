@@ -31,7 +31,7 @@ func main() {
 
 	errs := make(chan error)
 
-	sig := make(chan os.Signal)
+	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
 	api.Run(errs, func(router chi.Router) http.Handler {
