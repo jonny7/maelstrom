@@ -20,6 +20,11 @@ type UI struct {
 	logger zerolog.Logger
 }
 
+func (u UI) Start(w http.ResponseWriter, _ *http.Request) {
+	u.app.Agent.Start()
+	w.WriteHeader(200)
+}
+
 func (u UI) Health(w http.ResponseWriter, r *http.Request) {
 	//TODO implement me
 	panic("implement me")

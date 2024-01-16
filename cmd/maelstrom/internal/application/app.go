@@ -13,9 +13,9 @@ type App struct {
 	Agent  agent.Service
 }
 
-func New(consumer commander.Consumer) App {
+func New(consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient) App {
 	logger := zerolog.New(os.Stdout).With().Str("service", "maelstrom application").Timestamp().Logger()
-	a, err := agent.New(logger, consumer)
+	a, err := agent.New(logger, consumer, processor, client)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}

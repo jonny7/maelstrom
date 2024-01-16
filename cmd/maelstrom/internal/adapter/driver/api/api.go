@@ -24,6 +24,12 @@ type Server struct {
 	config config.Config
 }
 
+func (s Server) Start(w http.ResponseWriter, r *http.Request) {
+	s.app.Agent.Start()
+	t := true
+	render.Respond(w, r, maelstrom.Bool{Success: &t})
+}
+
 func New(app application.App) Server {
 	logger := zerolog.New(os.Stdout).With().Str("subsystem", "maelstrom API").Timestamp().Logger()
 	cfg, err := config.New()
@@ -45,6 +51,7 @@ func (s Server) setupRoutes(router *chi.Mux) {
 	router.Get("/healthz", s.Health)
 	router.Get("/nodes", s.Nodes)
 	router.Post("/scale", s.Scale)
+	router.Post("/start", s.Start)
 }
 
 func (s Server) Run(errs chan error, mountRouter func(router chi.Router) http.Handler) {

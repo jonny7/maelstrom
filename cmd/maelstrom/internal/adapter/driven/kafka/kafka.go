@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka/config"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	"github.com/rs/zerolog/log"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
@@ -29,10 +30,10 @@ func New() (*Kafka, error) {
 	return &Kafka{client: cl}, nil
 }
 
-func (k Kafka) Consume() {
-	for {
-		select {
-		default:
+func (k Kafka) Consume() chan commander.Event {
+	ch := make(chan commander.Event)
+	go func() {
+		for {
 			fetch := k.client.PollFetches(context.Background())
 			if errs := fetch.Errors(); len(errs) > 0 {
 				log.Error().Interface("kafka fetch errors", errs).Send()
@@ -40,10 +41,25 @@ func (k Kafka) Consume() {
 			iter := fetch.RecordIter()
 			for !iter.Done() {
 				record := iter.Next()
-				fmt.Println(string(record.Value), "from an iterator!")
+				ch <- commander.Event{
+					Key:   record.Key,
+					Value: record.Value,
+					Headers: func(record *kgo.Record) []commander.Header {
+						var headers []commander.Header
+						for _, v := range record.Headers {
+							headers = append(headers, commander.Header{
+								Key:   v.Key,
+								Value: v.Value,
+							})
+						}
+						return headers
+					}(record),
+					Timestamp: record.Timestamp,
+				}
 			}
 		}
-	}
+	}()
+	return ch
 }
 
 func (k Kafka) Close() {
