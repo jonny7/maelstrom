@@ -10,7 +10,7 @@ import (
 
 type RequestProcessor struct{}
 
-func (r RequestProcessor) Process(work <-chan commander.Event) chan *http.Request {
+func (r RequestProcessor) Process(done chan struct{}, work <-chan commander.Event) chan *http.Request {
 	ch := make(chan *http.Request)
 	go func() {
 		defer close(ch)
@@ -19,13 +19,15 @@ func (r RequestProcessor) Process(work <-chan commander.Event) chan *http.Reques
 			case msg := <-work:
 				// @todo proper protobuf decode
 				decode := msg
-				req, err := http.NewRequest(http.MethodPost, "https://localhost:8080", bytes.NewBuffer(decode.Value))
+				req, err := http.NewRequest(http.MethodPost, "http://localhost:55000/", bytes.NewBuffer(decode.Value))
 				if err != nil {
 					log.Error().Err(err).Send()
+					continue
 				}
 				ch <- req
-			default:
-				return // @todo done chan
+			case <-done:
+				log.Debug().Msg("closing custom processing")
+				return
 			}
 		}
 	}()

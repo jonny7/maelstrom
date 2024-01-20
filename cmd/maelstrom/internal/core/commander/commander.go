@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -16,6 +17,7 @@ type Commander struct {
 	consumer  Consumer
 	processor Processor
 	client    HTTPClient
+	interrupt chan struct{}
 }
 
 type Event struct {
@@ -34,13 +36,34 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// Processor deserializes and converts events to http requests
 type Processor interface {
-	Process(work <-chan Event) chan *http.Request
+	Process(done chan struct{}, work <-chan Event) chan *http.Request
 }
 
+// Consumer provides a mechanism to consume events from any source system
 type Consumer interface {
-	Consume() chan Event
+	Start(<-chan struct{}) chan Event
 	Close()
+}
+
+func (c *Commander) Stop() {
+	close(c.interrupt)
+}
+
+func (c *Commander) Start() {
+	c.interrupt = make(chan struct{})
+
+	work := c.consumer.Start(c.interrupt)
+	load := c.processor.Process(c.interrupt, work)
+	results := c.Vortex(c.interrupt, load)
+
+	go func() {
+		for r := range results {
+			// @todo do metrics here
+			fmt.Println(r)
+		}
+	}()
 }
 
 // Leave returns the attempted raft removal of the node
@@ -53,24 +76,32 @@ func (c *Commander) Join(id, addr string) error {
 	return nil
 }
 
-func (c *Commander) Consume() chan Event {
-	return c.consumer.Consume()
+type result struct {
+	err      error
+	response *http.Response
 }
 
-func (c *Commander) Process(work chan Event) {
-	// @todo add done chans
-	ch := c.processor.Process(work)
+func (c *Commander) Vortex(done chan struct{}, work chan *http.Request) chan result {
+	// @todo make this parallelizable
+	ch := make(chan result)
 	go func() {
 		defer close(ch)
-		for request := range ch {
-			response, err := c.client.Do(request)
-			if err != nil {
-				log.Error().Err(err).Send()
-				continue
+		for {
+			select {
+			case <-done:
+				log.Debug().Msg("commander received stop signal for http vortex")
+				return
+			case request := <-work:
+				log.Debug().Msg("sending HTTP request")
+				response, err := c.client.Do(request)
+				ch <- result{
+					err:      err,
+					response: response,
+				}
 			}
-			log.Info().Msgf("response code was: %d", response.StatusCode)
 		}
 	}()
+	return ch
 }
 
 func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTTPClient) Commander {
@@ -79,6 +110,7 @@ func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTT
 		consumer:  consumer,
 		processor: processor,
 		client:    client,
+		interrupt: make(chan struct{}),
 	}
 
 	return cmdr
