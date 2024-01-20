@@ -33,13 +33,18 @@ type Agent struct {
 
 func (a Agent) Start() {
 	log.Debug().Msg("starting consumer and processor")
-	ch := a.agent.commander.Consume()
-	a.agent.commander.Process(ch)
+	a.agent.commander.Start()
+}
+
+func (a Agent) Stop() {
+	log.Debug().Msg("stop load test was triggered by the user")
+	a.agent.commander.Stop()
 }
 
 type Service interface {
 	Members() []serf.Member
 	Start()
+	Stop()
 }
 
 func (a Agent) Members() []serf.Member {

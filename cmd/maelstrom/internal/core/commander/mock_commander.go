@@ -78,17 +78,17 @@ func (m *MockProcessor) EXPECT() *MockProcessorMockRecorder {
 }
 
 // Process mocks base method.
-func (m *MockProcessor) Process(work <-chan Event) chan *http.Request {
+func (m *MockProcessor) Process(done chan struct{}, work <-chan Event) chan *http.Request {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Process", work)
+	ret := m.ctrl.Call(m, "Process", done, work)
 	ret0, _ := ret[0].(chan *http.Request)
 	return ret0
 }
 
 // Process indicates an expected call of Process.
-func (mr *MockProcessorMockRecorder) Process(work any) *gomock.Call {
+func (mr *MockProcessorMockRecorder) Process(done, work any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockProcessor)(nil).Process), work)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockProcessor)(nil).Process), done, work)
 }
 
 // MockConsumer is a mock of Consumer interface.
@@ -126,16 +126,16 @@ func (mr *MockConsumerMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockConsumer)(nil).Close))
 }
 
-// Consume mocks base method.
-func (m *MockConsumer) Consume() chan Event {
+// Start mocks base method.
+func (m *MockConsumer) Start(arg0 <-chan struct{}) chan Event {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Consume")
+	ret := m.ctrl.Call(m, "Start", arg0)
 	ret0, _ := ret[0].(chan Event)
 	return ret0
 }
 
-// Consume indicates an expected call of Consume.
-func (mr *MockConsumerMockRecorder) Consume() *gomock.Call {
+// Start indicates an expected call of Start.
+func (mr *MockConsumerMockRecorder) Start(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Consume", reflect.TypeOf((*MockConsumer)(nil).Consume))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockConsumer)(nil).Start), arg0)
 }

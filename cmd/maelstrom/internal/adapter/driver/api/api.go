@@ -13,6 +13,7 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -21,13 +22,21 @@ import (
 type Server struct {
 	app    application.App
 	logger zerolog.Logger
-	config config.Config
+	cfg    config.Config
+}
+
+func boolean(bool bool) *bool {
+	return &bool
+}
+
+func (s Server) Stop(w http.ResponseWriter, r *http.Request) {
+	s.app.Agent.Stop()
+	render.Respond(w, r, maelstrom.Bool{Success: boolean(true)})
 }
 
 func (s Server) Start(w http.ResponseWriter, r *http.Request) {
 	s.app.Agent.Start()
-	t := true
-	render.Respond(w, r, maelstrom.Bool{Success: &t})
+	render.Respond(w, r, maelstrom.Bool{Success: boolean(true)})
 }
 
 func New(app application.App) Server {
@@ -36,7 +45,7 @@ func New(app application.App) Server {
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}
-	srv := Server{app: app, config: *cfg}
+	srv := Server{app: app, cfg: *cfg}
 	srv.logger = logger
 	return srv
 }
@@ -54,7 +63,7 @@ func (s Server) setupRoutes(router *chi.Mux) {
 	router.Post("/start", s.Start)
 }
 
-func (s Server) Run(errs chan error, mountRouter func(router chi.Router) http.Handler) {
+func (s Server) Run(done chan struct{}, errs chan error, mountRouter func(router chi.Router) http.Handler) {
 	// create router
 	mux := chi.NewRouter()
 	setupMiddlewares(mux)
@@ -64,9 +73,19 @@ func (s Server) Run(errs chan error, mountRouter func(router chi.Router) http.Ha
 	base := chi.NewRouter()
 	base.Mount("/api", mountRouter(mux))
 
+	srv := http.Server{Addr: s.cfg.HttpAddress(), Handler: base}
+
 	go func() {
-		s.logger.Info().Msgf("starting API on: %s", s.config.HttpAddress())
-		errs <- http.ListenAndServe(s.config.HttpAddress(), base)
+		s.logger.Info().Msgf("starting API on: %s", s.cfg.HttpAddress())
+		errs <- srv.ListenAndServe()
+	}()
+	go func() {
+		defer log.Info().Msg("shutdown API server... Goodbye!")
+		for range done {
+			if err := srv.Shutdown(context.Background()); err != nil {
+				log.Error().Err(err).Send()
+			}
+		}
 	}()
 }
 
@@ -100,7 +119,7 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cur, getErr := clientSet.AppsV1().
-		StatefulSets(s.config.K8s.Namespace).
+		StatefulSets(s.cfg.K8s.Namespace).
 		GetScale(context.Background(), "maelstrom", metav1.GetOptions{})
 	if getErr != nil {
 		render.Status(r, http.StatusInternalServerError)
@@ -111,7 +130,7 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 	sc.Spec.Replicas = int32(*newScale.NumberOfWorkers)
 
 	_, err := clientSet.AppsV1().
-		StatefulSets(s.config.K8s.Namespace).
+		StatefulSets(s.cfg.K8s.Namespace).
 		UpdateScale(context.Background(), "maelstrom", &sc, metav1.UpdateOptions{})
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)

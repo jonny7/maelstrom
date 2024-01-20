@@ -30,17 +30,15 @@ func New() (*Kafka, error) {
 	return &Kafka{client: cl}, nil
 }
 
-func (k Kafka) Consume() chan commander.Event {
+func (k Kafka) Start(done <-chan struct{}) chan commander.Event {
 	ch := make(chan commander.Event)
+	records := k.consume(done)
 	go func() {
+		defer close(ch)
 		for {
-			fetch := k.client.PollFetches(context.Background())
-			if errs := fetch.Errors(); len(errs) > 0 {
-				log.Error().Interface("kafka fetch errors", errs).Send()
-			}
-			iter := fetch.RecordIter()
-			for !iter.Done() {
-				record := iter.Next()
+			select {
+			case record := <-records:
+				log.Debug().Msg("creating event from franz record")
 				ch <- commander.Event{
 					Key:   record.Key,
 					Value: record.Value,
@@ -56,9 +54,44 @@ func (k Kafka) Consume() chan commander.Event {
 					}(record),
 					Timestamp: record.Timestamp,
 				}
+			case <-done:
+				log.Info().Msg("exiting kafka consumer")
+				return
 			}
 		}
 	}()
+	return ch
+}
+
+func (k Kafka) consume(done <-chan struct{}) chan *kgo.Record {
+	ch := make(chan *kgo.Record)
+
+	fetches := k.client.PollFetches(context.Background())
+	if errs := fetches.Errors(); len(errs) > 0 {
+		// All errors are retried internally when fetching, but non-retriable errors are
+		// returned from polls so that users can notice and take action.
+		panic(fmt.Sprint(errs))
+	}
+
+	// We can iterate through a record iterator...
+	iter := fetches.RecordIter()
+	go func() {
+		defer close(ch)
+		for {
+			select {
+			case <-done:
+				log.Info().Msg("closing client consumer")
+				return
+			default:
+				if !iter.Done() {
+					record := iter.Next()
+					fmt.Println(string(record.Value), "from an iterator!")
+					ch <- record
+				}
+			}
+		}
+	}()
+
 	return ch
 }
 
