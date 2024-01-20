@@ -35,22 +35,27 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
-	api.Run(errs, func(router chi.Router) http.Handler {
+	done := make(chan struct{})
+
+	api.Run(done, errs, func(router chi.Router) http.Handler {
 		return maelstrom.HandlerFromMux(api, router)
 	})
 
 	// @todo headless
 	ui := u.New(app)
-	ui.Run(errs, func(router chi.Router) http.Handler {
+	ui.Run(done, errs, func(router chi.Router) http.Handler {
 		return maelstrom.HandlerFromMux(ui, router)
 	})
 
 	for {
 		select {
-		case <-sig:
-			log.Info().Msgf("shutting down from signal: %v", sig)
-		case err := <-errs:
-			log.Err(err).Msgf("returning from ListenAndServe: %v", err)
+		case msg := <-sig:
+			log.Info().Msgf("shutting down from signal: %v", msg)
+			close(done)
+			return
+		case err = <-errs:
+			log.Error().Err(err).Msgf("returning from ListenAndServe: %v", err)
+			return
 		}
 	}
 }
