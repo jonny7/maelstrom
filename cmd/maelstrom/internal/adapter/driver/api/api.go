@@ -80,14 +80,10 @@ func (s Server) Run(done chan struct{}, errs chan error, mountRouter func(router
 		errs <- srv.ListenAndServe()
 	}()
 	go func() {
-		for {
-			select {
-			case <-done:
-				if err := srv.Shutdown(context.Background()); err != nil {
-					log.Error().Err(err).Send()
-				}
-				log.Info().Msg("shutdown API server... Goodbye!")
-				return
+		defer log.Info().Msg("shutdown API server... Goodbye!")
+		for range done {
+			if err := srv.Shutdown(context.Background()); err != nil {
+				log.Error().Err(err).Send()
 			}
 		}
 	}()

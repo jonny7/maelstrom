@@ -67,14 +67,10 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 		errs <- srv.ListenAndServe()
 	}()
 	go func() {
-		for {
-			select {
-			case <-done:
-				if err := srv.Shutdown(context.Background()); err != nil {
-					log.Error().Err(err).Send()
-				}
-				log.Info().Msg("shutdown UI server... Goodbye!")
-				return
+		defer log.Info().Msg("shutdown UI server... Goodbye!")
+		for range done {
+			if err := srv.Shutdown(context.Background()); err != nil {
+				log.Error().Err(err).Send()
 			}
 		}
 	}()
