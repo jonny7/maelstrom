@@ -82,6 +82,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /stop:
+    post:
+      operationId: stop
+      requestBody:
+        description: |
+          stop the load test
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bool'
+      responses:
+        '200':
+          description: |
+            stop the load test
+        default:
+          description: error trying to start load test
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   schemas:
     Node:
