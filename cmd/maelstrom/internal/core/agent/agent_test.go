@@ -2,7 +2,6 @@ package agent
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"strconv"
 	"testing"
@@ -18,11 +17,8 @@ func TestAgent(t *testing.T) {
 	defer ctrl.Finish()
 
 	consumer := commander.NewMockConsumer(ctrl)
-	consumer.EXPECT().Consume().AnyTimes()
 	processor := commander.NewMockProcessor(ctrl)
-	processor.EXPECT().Process(1).AnyTimes()
 	httpClient := commander.NewMockHTTPClient(ctrl)
-	httpClient.EXPECT().Do(http.Request{}).AnyTimes()
 
 	for i := 0; i < 3; i++ {
 		ports := dynaport.Get(2)

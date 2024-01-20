@@ -22,7 +22,7 @@ type UI struct {
 	logger zerolog.Logger
 }
 
-func (u UI) Stop(w http.ResponseWriter, r *http.Request) {
+func (u UI) Stop(w http.ResponseWriter, _ *http.Request) {
 	u.app.Agent.Stop()
 	w.WriteHeader(200)
 }

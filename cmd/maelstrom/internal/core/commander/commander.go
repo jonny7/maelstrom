@@ -53,7 +53,7 @@ func (c *Commander) Stop() {
 
 func (c *Commander) Start() {
 	c.interrupt = make(chan struct{})
-
+	// @todo redo tests
 	work := c.consumer.Start(c.interrupt)
 	load := c.processor.Process(c.interrupt, work)
 	results := c.Vortex(c.interrupt, load)
