@@ -39,12 +39,6 @@ func (s Server) Start(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, maelstrom.Bool{Success: boolean(true)})
 }
 
-func (s Server) Start(w http.ResponseWriter, r *http.Request) {
-	s.app.Agent.Start()
-	t := true
-	render.Respond(w, r, maelstrom.Bool{Success: &t})
-}
-
 func New(app application.App) Server {
 	logger := zerolog.New(os.Stdout).With().Str("subsystem", "maelstrom API").Timestamp().Logger()
 	cfg, err := config.New()
