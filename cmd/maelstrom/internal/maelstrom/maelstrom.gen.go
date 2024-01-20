@@ -24,6 +24,9 @@ type ServerInterface interface {
 
 	// (POST /start)
 	Start(w http.ResponseWriter, r *http.Request)
+
+	// (POST /stop)
+	Stop(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -47,6 +50,11 @@ func (_ Unimplemented) Scale(w http.ResponseWriter, r *http.Request) {
 
 // (POST /start)
 func (_ Unimplemented) Start(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /stop)
+func (_ Unimplemented) Stop(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -110,6 +118,21 @@ func (siw *ServerInterfaceWrapper) Start(w http.ResponseWriter, r *http.Request)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Start(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// Stop operation middleware
+func (siw *ServerInterfaceWrapper) Stop(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Stop(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -243,6 +266,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/start", wrapper.Start)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/stop", wrapper.Stop)
 	})
 
 	return r

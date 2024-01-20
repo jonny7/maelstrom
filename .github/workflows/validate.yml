@@ -19,11 +19,13 @@ jobs:
 
     - name: vet
       run: go vet ./...
-      
-    - name: test
-      run: go test -v ./... -race -covermode=atomic -coverprofile=coverage.out
 
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
         version: latest
+      
+    - name: test
+      run: go test -v ./... -race -covermode=atomic -coverprofile=coverage.out
+
+

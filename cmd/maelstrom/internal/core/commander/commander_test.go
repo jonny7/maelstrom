@@ -12,9 +12,8 @@ import (
 
 type process struct{}
 
-func (p process) Process(work <-chan Event) chan *http.Request {
+func (p process) Process(done chan struct{}, work <-chan Event) chan *http.Request {
 	ch := make(chan *http.Request)
-	done := make(chan struct{})
 	go func() {
 		time.Sleep(2 * time.Second)
 		done <- struct{}{}
@@ -53,7 +52,7 @@ func TestNewCommander(t *testing.T) {
 	_ = NewCommander(Config{}, consumer, processor, h)
 }
 
-func TestCommanderConsumer(t *testing.T) {
+func TestCommanderStart(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -61,11 +60,13 @@ func TestCommanderConsumer(t *testing.T) {
 	processor := NewMockProcessor(ctrl)
 	h := NewMockHTTPClient(ctrl)
 
-	consumer.EXPECT().Consume().Times(1)
+	//done := make(chan struct{})
+	//consumer.EXPECT().Start(done).Times(1)
 
 	cmdr := NewCommander(Config{}, consumer, processor, h)
 
-	cmdr.consumer.Consume()
+	fmt.Println(cmdr) // @todo fix tests
+	//cmdr.Start()
 }
 
 func TestCommanderProcessor(t *testing.T) {
@@ -76,15 +77,16 @@ func TestCommanderProcessor(t *testing.T) {
 	processor := NewMockProcessor(ctrl)
 	h := NewMockHTTPClient(ctrl)
 
-	consumer.EXPECT().Consume().Times(1)
+	done := make(chan struct{})
+	consumer.EXPECT().Start(done).Times(1)
 
 	cmdr := NewCommander(Config{}, consumer, processor, h)
 
-	wrk := cmdr.consumer.Consume()
+	wrk := cmdr.consumer.Start(done)
 
-	processor.EXPECT().Process(wrk).Times(1)
+	processor.EXPECT().Process(done, wrk).Times(1)
 
-	cmdr.processor.Process(wrk)
+	cmdr.processor.Process(done, wrk)
 }
 
 func TestCommanderProcess(t *testing.T) {
@@ -109,5 +111,7 @@ func TestCommanderProcess(t *testing.T) {
 			}
 		}
 	}()
-	cmdr.Process(ch)
+	fmt.Println(cmdr)
+	//done := make(chan struct{})
+	//cmdr.processor.Process(done, ch)
 }

@@ -31,3 +31,6 @@ type ScaleJSONRequestBody = Scale
 
 // StartJSONRequestBody defines body for Start for application/json ContentType.
 type StartJSONRequestBody = Bool
+
+// StopJSONRequestBody defines body for Stop for application/json ContentType.
+type StopJSONRequestBody = Bool

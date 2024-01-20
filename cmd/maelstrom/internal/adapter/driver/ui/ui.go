@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -12,12 +13,18 @@ import (
 	"github.com/jonny7/maelstrom/ui/components"
 	"github.com/jonny7/maelstrom/ui/views"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type UI struct {
 	app    application.App
 	cfg    config.Config
 	logger zerolog.Logger
+}
+
+func (u UI) Stop(w http.ResponseWriter, _ *http.Request) {
+	u.app.Agent.Stop()
+	w.WriteHeader(200)
 }
 
 func (u UI) Start(w http.ResponseWriter, _ *http.Request) {
@@ -46,16 +53,26 @@ func New(app application.App) UI {
 	return srv
 }
 
-func (u UI) Run(errs chan error, mountRouter func(router chi.Router) http.Handler) {
+func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi.Router) http.Handler) {
 	// create router
 	mux := chi.NewRouter()
 	mux.Use(middleware.Recoverer)
 	// generate routes
 	u.setupRoutes(mux)
 
+	srv := http.Server{Addr: u.cfg.HttpAddress(), Handler: mountRouter(mux)}
+
 	go func() {
 		u.logger.Info().Msgf("starting UI on: %s", u.cfg.HttpAddress())
-		errs <- http.ListenAndServe(u.cfg.HttpAddress(), mountRouter(mux))
+		errs <- srv.ListenAndServe()
+	}()
+	go func() {
+		defer log.Info().Msg("shutdown UI server... Goodbye!")
+		for range done {
+			if err := srv.Shutdown(context.Background()); err != nil {
+				log.Error().Err(err).Send()
+			}
+		}
 	}()
 }
 
