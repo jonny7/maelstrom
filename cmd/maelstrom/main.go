@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/metrics"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/processor"
 	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
@@ -26,7 +27,7 @@ func main() {
 	defer client.Close()
 
 	// @todo same with processor
-	app := service.NewApplication(client, processor.RequestProcessor{}, &http.Client{})
+	app := service.NewApplication(client, processor.RequestProcessor{}, &http.Client{}, metrics.New())
 
 	api := a.New(app)
 

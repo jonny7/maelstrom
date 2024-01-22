@@ -85,7 +85,7 @@ func (k Kafka) consume(done <-chan struct{}) chan *kgo.Record {
 			default:
 				if !iter.Done() {
 					record := iter.Next()
-					fmt.Println(string(record.Value), "from an iterator!")
+					log.Debug().Msg("received message from iterator")
 					ch <- record
 				}
 			}

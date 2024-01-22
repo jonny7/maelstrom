@@ -18,7 +18,8 @@ func TestAgent(t *testing.T) {
 
 	consumer := commander.NewMockConsumer(ctrl)
 	processor := commander.NewMockProcessor(ctrl)
-	httpClient := commander.NewMockHTTPClient(ctrl)
+	h := commander.NewMockHTTPClient(ctrl)
+	m := commander.NewMockMetrics(ctrl)
 
 	for i := 0; i < 3; i++ {
 		ports := dynaport.Get(2)
@@ -45,7 +46,7 @@ func TestAgent(t *testing.T) {
 			}
 		}
 
-		if _, err := New(zerolog.Logger{}, consumer, processor, httpClient); err != nil {
+		if _, err := New(zerolog.Logger{}, consumer, processor, h, m); err != nil {
 			t.Errorf("expected no error: %v", err)
 		}
 	}
