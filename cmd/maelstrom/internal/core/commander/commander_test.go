@@ -1,44 +1,16 @@
 package commander
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 	"testing"
 	"time"
 
 	"go.uber.org/mock/gomock"
 )
 
-type process struct{}
-
-func (p process) Process(done chan struct{}, work <-chan Event) chan *http.Request {
-	ch := make(chan *http.Request)
-	go func() {
-		time.Sleep(2 * time.Second)
-		done <- struct{}{}
-	}()
-	go func() {
-		defer close(ch)
-		for {
-			select {
-			case <-work:
-				r, _ := http.NewRequest(http.MethodGet, "localhost:8080", nil)
-				ch <- r
-			case <-done:
-				return
-			}
-		}
-	}()
-	return ch
-}
-
-type client struct{}
-
-func (c client) Do(_ *http.Request) (*http.Response, error) {
-	return &http.Response{
-		StatusCode: 200,
-	}, nil
+func newConfig(t *testing.T) Config {
+	t.Helper()
+	return Config{}
 }
 
 func TestNewCommander(t *testing.T) {
@@ -48,8 +20,20 @@ func TestNewCommander(t *testing.T) {
 	consumer := NewMockConsumer(ctrl)
 	processor := NewMockProcessor(ctrl)
 	h := NewMockHTTPClient(ctrl)
+	m := NewMockMetrics(ctrl)
 
-	_ = NewCommander(Config{}, consumer, processor, h)
+	_ = NewCommander(newConfig(t), consumer, processor, h, m)
+}
+
+func TestCommanderStop(t *testing.T) {
+	done := make(chan struct{})
+	cmdr := Commander{
+		interrupt: done,
+	}
+	cmdr.Stop()
+	if _, ok := <-done; ok {
+		t.Errorf("expected closed channel, but got: %v", done)
+	}
 }
 
 func TestCommanderStart(t *testing.T) {
@@ -59,59 +43,92 @@ func TestCommanderStart(t *testing.T) {
 	consumer := NewMockConsumer(ctrl)
 	processor := NewMockProcessor(ctrl)
 	h := NewMockHTTPClient(ctrl)
+	m := NewMockMetrics(ctrl)
 
-	//done := make(chan struct{})
-	//consumer.EXPECT().Start(done).Times(1)
+	consumer.EXPECT().Start(gomock.Any()).Times(1)
+	processor.EXPECT().Process(gomock.Any(), gomock.Any()).Times(1)
 
-	cmdr := NewCommander(Config{}, consumer, processor, h)
-
-	fmt.Println(cmdr) // @todo fix tests
-	//cmdr.Start()
+	cmdr := NewCommander(newConfig(t), consumer, processor, h, m)
+	cmdr.Start()
 }
 
-func TestCommanderProcessor(t *testing.T) {
+func TestDeriveStatusCode(t *testing.T) {
+	data := []struct {
+		name     string
+		response *http.Response
+		want     int
+	}{
+		{name: "nil HTTP response", response: nil, want: 500},
+		{name: "200 response", response: &http.Response{StatusCode: 200}, want: 200},
+		{name: "404 response", response: &http.Response{StatusCode: 404}, want: 404},
+	}
+
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			got := deriveStatusCode(d.response)
+			if got != d.want {
+				t.Errorf("expected %d but got %d", d.want, got)
+			}
+		})
+	}
+}
+
+func TestAnalytics(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	consumer := NewMockConsumer(ctrl)
 	processor := NewMockProcessor(ctrl)
 	h := NewMockHTTPClient(ctrl)
+	m := NewMockMetrics(ctrl)
+
+	m.EXPECT().Increment().MinTimes(1)
 
 	done := make(chan struct{})
-	consumer.EXPECT().Start(done).Times(1)
+	results := make(chan result)
 
-	cmdr := NewCommander(Config{}, consumer, processor, h)
+	cmdr := NewCommander(newConfig(t), consumer, processor, h, m)
 
-	wrk := cmdr.consumer.Start(done)
-
-	processor.EXPECT().Process(done, wrk).Times(1)
-
-	cmdr.processor.Process(done, wrk)
-}
-
-func TestCommanderProcess(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cmdr := Commander{
-		config:    Config{},
-		processor: process{},
-		client:    client{},
-	}
-
-	ch := make(chan Event)
 	go func() {
-		defer close(ch)
-		for i := 0; i < 5; i++ {
-			ch <- Event{
-				Key:       []byte(strconv.Itoa(i)),
-				Value:     []byte(fmt.Sprintf("message-%d", i)),
-				Headers:   nil,
-				Timestamp: time.Now(),
+		for i := 0; i < 10; i++ {
+			results <- result{
+				err:      nil,
+				response: &http.Response{},
 			}
 		}
 	}()
-	fmt.Println(cmdr)
-	//done := make(chan struct{})
-	//cmdr.processor.Process(done, ch)
+
+	cmdr.analytics(done, results)
+	time.Sleep(500 * time.Millisecond)
+	close(done)
+	time.Sleep(500 * time.Millisecond)
+}
+
+func TestVortexer(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	consumer := NewMockConsumer(ctrl)
+	processor := NewMockProcessor(ctrl)
+	h := NewMockHTTPClient(ctrl)
+	m := NewMockMetrics(ctrl)
+
+	h.EXPECT().Do(gomock.Any()).MinTimes(1)
+
+	done := make(chan struct{})
+	work := make(chan *http.Request)
+
+	cmdr := NewCommander(newConfig(t), consumer, processor, h, m)
+
+	go func() {
+		for i := 0; i < 10; i++ {
+			r, _ := http.NewRequest(http.MethodGet, "localhost:8080", nil)
+			work <- r
+		}
+	}()
+
+	cmdr.vortexer(done, work)
+	time.Sleep(500 * time.Millisecond)
+	close(done)
+	time.Sleep(500 * time.Millisecond)
 }

@@ -53,7 +53,7 @@ func (a Agent) Members() []serf.Member {
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
 // The agent will also set up all membership for the Serf cluster
-func New(logger zerolog.Logger, consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient) (Service, error) {
+func New(logger zerolog.Logger, consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient, metrics commander.Metrics) (Service, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func New(logger zerolog.Logger, consumer commander.Consumer, processor commander
 	}
 
 	// create commander
-	a.commander = commander.NewCommander(cfg.Commander, consumer, processor, client)
+	a.commander = commander.NewCommander(cfg.Commander, consumer, processor, client, metrics)
 
 	// setup mux or err
 	if err := a.setupMux(); err != nil {

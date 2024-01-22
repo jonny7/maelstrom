@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -18,6 +17,7 @@ type Commander struct {
 	processor Processor
 	client    HTTPClient
 	interrupt chan struct{}
+	metrics   Metrics
 }
 
 type Event struct {
@@ -53,17 +53,40 @@ func (c *Commander) Stop() {
 
 func (c *Commander) Start() {
 	c.interrupt = make(chan struct{})
-	// @todo redo tests
+
 	work := c.consumer.Start(c.interrupt)
 	load := c.processor.Process(c.interrupt, work)
-	results := c.Vortex(c.interrupt, load)
+	results := c.vortexer(c.interrupt, load)
 
+	c.analytics(c.interrupt, results)
+}
+
+type Metrics interface {
+	Increment()
+}
+
+func (c *Commander) analytics(done chan struct{}, results chan result) {
 	go func() {
-		for r := range results {
-			// @todo do metrics here
-			fmt.Println(r)
+		var i int
+		for {
+			select {
+			case <-done:
+				close(results)
+				return
+			case res := <-results:
+				c.metrics.Increment()
+				i++
+				log.Debug().Int64("time", time.Now().Unix()).Msgf("status code: %d, iteration: %d", deriveStatusCode(res.response), i)
+			}
 		}
 	}()
+}
+
+func deriveStatusCode(resp *http.Response) int {
+	if resp == nil {
+		return 500
+	}
+	return resp.StatusCode
 }
 
 // Leave returns the attempted raft removal of the node
@@ -81,11 +104,10 @@ type result struct {
 	response *http.Response
 }
 
-func (c *Commander) Vortex(done chan struct{}, work chan *http.Request) chan result {
+func (c *Commander) vortexer(done chan struct{}, work chan *http.Request) chan result {
 	// @todo make this parallelizable
 	ch := make(chan result)
 	go func() {
-		defer close(ch)
 		for {
 			select {
 			case <-done:
@@ -93,24 +115,27 @@ func (c *Commander) Vortex(done chan struct{}, work chan *http.Request) chan res
 				return
 			case request := <-work:
 				log.Debug().Msg("sending HTTP request")
-				response, err := c.client.Do(request)
-				ch <- result{
-					err:      err,
-					response: response,
-				}
+				go func() {
+					response, err := c.client.Do(request)
+					ch <- result{
+						err:      err,
+						response: response,
+					}
+				}()
 			}
 		}
 	}()
 	return ch
 }
 
-func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTTPClient) Commander {
+func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTTPClient, metrics Metrics) Commander {
 	cmdr := Commander{
 		config:    cfg,
 		consumer:  consumer,
 		processor: processor,
 		client:    client,
 		interrupt: make(chan struct{}),
+		metrics:   metrics,
 	}
 
 	return cmdr
