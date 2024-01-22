@@ -5,6 +5,6 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 )
 
-func NewApplication(consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient) application.App {
-	return application.New(consumer, processor, client)
+func NewApplication(consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient, metrics commander.Metrics) application.App {
+	return application.New(consumer, processor, client, metrics)
 }
