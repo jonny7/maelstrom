@@ -12,6 +12,7 @@ import (
 
 type Kafka struct {
 	client *kgo.Client
+	cfg    config.Config
 }
 
 func New() (*Kafka, error) {
@@ -19,11 +20,11 @@ func New() (*Kafka, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize kafka: %w", err)
 	}
-	cl, err := kgo.NewClient(
-		kgo.SeedBrokers(cfg.Seeds...),
-		kgo.ConsumerGroup(cfg.ConsumerGroup),
-		kgo.ConsumeTopics(cfg.ConsumerTopics...),
-	)
+	opts := cfg.DefaultClient()
+	opts = append(opts, cfg.WithTLS()...)
+
+	cl, err := kgo.NewClient(opts...)
+
 	if err != nil {
 		return nil, err
 	}
