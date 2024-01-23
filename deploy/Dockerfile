@@ -13,6 +13,8 @@ RUN go build -o bin/maelstrom ./cmd/maelstrom
 
 FROM scratch
 
+WORKDIR /usr/local/bin
+
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/github.com/jonny7/maelstrom/bin/maelstrom ./maelstrom
 
