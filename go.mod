@@ -8,7 +8,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-chi/render v1.0.3
 	github.com/hashicorp/raft v1.6.0
-	github.com/hashicorp/raft-boltdb v0.0.0-20231115180007-027066e4d245
 	github.com/hashicorp/serf v0.10.1
 	github.com/rs/zerolog v1.31.0
 	github.com/soheilhy/cmux v0.1.5
@@ -16,6 +15,7 @@ require (
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twmb/franz-go v1.15.4
 	go.uber.org/mock v0.4.0
+	google.golang.org/protobuf v1.31.0
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4
 )
@@ -23,7 +23,6 @@ require (
 require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
-	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
@@ -61,8 +60,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/tetratelabs/wazero v1.6.0 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.7.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
@@ -72,7 +71,6 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.16.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
