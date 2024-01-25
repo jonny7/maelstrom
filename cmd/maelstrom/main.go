@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,12 +15,14 @@ import (
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
-	"github.com/rs/zerolog/log"
 )
 
 func main() {
 	// @todo make env or arg
 	client, err := service.NewConsumer(service.Kafka)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer client.Close()
 
 	// @todo same with processor
@@ -47,11 +50,11 @@ func main() {
 	for {
 		select {
 		case msg := <-sig:
-			log.Info().Msgf("shutting down from signal: %v", msg)
+			log.Printf("shutting down from signal: %v", msg)
 			close(done)
 			return
 		case err = <-errs:
-			log.Error().Err(err).Msgf("returning from ListenAndServe: %v", err)
+			log.Printf("returning from ListenAndServe: %v", err)
 			return
 		}
 	}

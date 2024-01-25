@@ -12,7 +12,6 @@ import (
 
 type Kafka struct {
 	client *kgo.Client
-	cfg    config.Config
 }
 
 func MustNewKafka() (*Kafka, error) {
@@ -24,6 +23,10 @@ func MustNewKafka() (*Kafka, error) {
 	opts = append(opts, cfg.WithTLS()...)
 
 	cl, err := kgo.NewClient(opts...)
+	if err != nil {
+		return nil, fmt.Errorf("kakfa client couldn't be initialized: %w", err)
+	}
+
 	if err = cl.Ping(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to connect to Kafka brokers: %w", err)
 	}

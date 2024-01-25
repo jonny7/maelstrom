@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/serf/serf"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/soheilhy/cmux"
@@ -53,7 +54,7 @@ func (a Agent) Members() []serf.Member {
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
 // The agent will also set up all membership for the Serf cluster
-func New(logger zerolog.Logger, consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient, metrics commander.Metrics) (Service, error) {
+func New(logger zerolog.Logger, consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient, metrics metrics.Metrics) (Service, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
