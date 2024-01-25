@@ -38,7 +38,7 @@ type HTTPClient interface {
 
 // Processor deserializes and converts events to http requests
 type Processor interface {
-	Process(done chan struct{}, work <-chan Event) chan *http.Request
+	Process(done chan struct{}, work <-chan Event, host string) chan *http.Request
 }
 
 // Consumer provides a mechanism to consume events from any source system
@@ -51,11 +51,11 @@ func (c *Commander) Stop() {
 	close(c.interrupt)
 }
 
-func (c *Commander) Start() {
+func (c *Commander) Start(host string) {
 	c.interrupt = make(chan struct{})
 
 	work := c.consumer.Start(c.interrupt)
-	load := c.processor.Process(c.interrupt, work)
+	load := c.processor.Process(c.interrupt, work, host)
 	results := c.vortexer(c.interrupt, load)
 
 	c.analytics(c.interrupt, results)
@@ -91,7 +91,7 @@ func deriveStatusCode(resp *http.Response) int {
 
 // Leave returns the attempted raft removal of the node
 func (c *Commander) Leave(id string) error {
-	return c.raft.RemoveServer(raft.ServerID(id), 0, 0).Error()
+	return nil //c.raft.RemoveServer(raft.ServerID(id), 0, 0).Error()
 }
 
 // Join returns the attempt to add a new voter to the cluster
@@ -114,6 +114,7 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request) chan r
 				log.Debug().Msg("commander received stop signal for http vortex")
 				return
 			case request := <-work:
+				//time.Sleep(1 * time.Second)
 				log.Debug().Msg("sending HTTP request")
 				go func() {
 					response, err := c.client.Do(request)

@@ -28,7 +28,7 @@ func (u UI) Stop(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (u UI) Start(w http.ResponseWriter, _ *http.Request) {
-	u.app.Agent.Start()
+	u.app.Agent.Start("url")
 	w.WriteHeader(200)
 }
 

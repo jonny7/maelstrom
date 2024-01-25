@@ -15,7 +15,7 @@ type Kafka struct {
 	cfg    config.Config
 }
 
-func New() (*Kafka, error) {
+func MustNewKafka() (*Kafka, error) {
 	cfg, err := config.New()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize kafka: %w", err)
@@ -24,6 +24,9 @@ func New() (*Kafka, error) {
 	opts = append(opts, cfg.WithTLS()...)
 
 	cl, err := kgo.NewClient(opts...)
+	if err = cl.Ping(context.Background()); err != nil {
+		return nil, fmt.Errorf("failed to connect to Kafka brokers: %w", err)
+	}
 
 	if err != nil {
 		return nil, err
@@ -74,8 +77,6 @@ func (k Kafka) consume(done <-chan struct{}) chan *kgo.Record {
 		panic(fmt.Sprint(errs))
 	}
 
-	// We can iterate through a record iterator...
-	iter := fetches.RecordIter()
 	go func() {
 		defer close(ch)
 		for {
@@ -84,10 +85,12 @@ func (k Kafka) consume(done <-chan struct{}) chan *kgo.Record {
 				log.Info().Msg("closing client consumer")
 				return
 			default:
+				iter := fetches.RecordIter()
 				if !iter.Done() {
 					record := iter.Next()
 					log.Debug().Msg("received message from iterator")
 					ch <- record
+					//k.client.CommittedOffsets()
 				}
 			}
 		}

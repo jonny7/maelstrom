@@ -8,7 +8,6 @@ import (
 	"syscall"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/metrics"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/processor"
 	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
@@ -19,15 +18,12 @@ import (
 )
 
 func main() {
-	// @todo move to dynamic config approach
-	client, err := kafka.New()
-	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
+	// @todo make env or arg
+	client, err := service.NewConsumer(service.Kafka)
 	defer client.Close()
 
 	// @todo same with processor
-	app := service.NewApplication(client, processor.RequestProcessor{}, &http.Client{}, metrics.New())
+	app := service.NewApplication(client, processor.NewProcessor(), &http.Client{}, metrics.New())
 
 	api := a.New(app)
 
