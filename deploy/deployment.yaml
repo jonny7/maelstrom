@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: maelstrom
+  namespace: default
 spec:
   serviceName: "maelstrom-svc"
   replicas: 2
