@@ -3,12 +3,15 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+	"github.com/goccy/go-json"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
@@ -25,18 +28,43 @@ type Server struct {
 	cfg    config.Config
 }
 
-func boolean(bool bool) *bool {
-	return &bool
-}
-
 func (s Server) Stop(w http.ResponseWriter, r *http.Request) {
 	s.app.Agent.Stop()
-	render.Respond(w, r, maelstrom.Bool{Success: boolean(true)})
+	render.Respond(w, r, maelstrom.Status{
+		Message: "success",
+		Status:  http.StatusOK,
+	})
 }
 
 func (s Server) Start(w http.ResponseWriter, r *http.Request) {
-	s.app.Agent.Start()
-	render.Respond(w, r, maelstrom.Bool{Success: boolean(true)})
+	var loader maelstrom.Vortex
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		render.Status(r, http.StatusInternalServerError)
+		render.Respond(w, r, maelstrom.Status{
+			Message: fmt.Sprintf("unable to read body of request: %v", err),
+			Status:  http.StatusInternalServerError,
+		})
+		return
+	}
+	err = json.Unmarshal(b, &loader)
+	if err != nil {
+		render.Status(r, 400)
+		render.Respond(w, r, maelstrom.Status{
+			Message: fmt.Sprintf("unable to unmarshall request: %v", err),
+			Status:  http.StatusBadRequest,
+		})
+		return
+	}
+	if _, err = url.Parse(loader.Host); err != nil {
+		render.Status(r, 400)
+		render.Respond(w, r, fmt.Sprintf("the provided host was unable to be parsed: %s", loader.Host))
+	}
+	s.app.Agent.Start(loader.Host)
+	render.Respond(w, r, maelstrom.Status{
+		Message: "success",
+		Status:  http.StatusOK,
+	})
 }
 
 func New(app application.App) Server {
@@ -102,20 +130,20 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 	var newScale maelstrom.Scale
 	if err := render.Decode(r, &newScale); err != nil {
 		render.Status(r, http.StatusBadRequest)
-		render.Respond(w, r, maelstrom.Error{Message: "unable to decode body"})
+		render.Respond(w, r, maelstrom.Status{Message: "unable to decode body"})
 		return
 	}
 
 	cfg, buildErr := clientcmd.BuildConfigFromFlags("", "")
 	if buildErr != nil {
 		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", buildErr)})
+		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%e", buildErr)})
 	}
 
 	clientSet, cfgErr := kubernetes.NewForConfig(cfg)
 	if cfgErr != nil {
 		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", cfgErr)})
+		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%e", cfgErr)})
 	}
 
 	cur, getErr := clientSet.AppsV1().
@@ -123,7 +151,7 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 		GetScale(context.Background(), "maelstrom", metav1.GetOptions{})
 	if getErr != nil {
 		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", cfgErr)})
+		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%e", cfgErr)})
 	}
 
 	sc := *cur
@@ -134,7 +162,7 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 		UpdateScale(context.Background(), "maelstrom", &sc, metav1.UpdateOptions{})
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Error{Message: fmt.Sprintf("%e", err)})
+		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%e", err)})
 	}
 
 	render.Status(r, http.StatusAccepted)

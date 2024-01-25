@@ -14,7 +14,7 @@ type App struct {
 }
 
 func New(consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient, metrics commander.Metrics) App {
-	logger := zerolog.New(os.Stdout).With().Str("service", "maelstrom application").Timestamp().Logger()
+	logger := zerolog.New(os.Stdout).Level(zerolog.InfoLevel).With().Str("service", "maelstrom application").Timestamp().Logger()
 	a, err := agent.New(logger, consumer, processor, client, metrics)
 	if err != nil {
 		logger.Fatal().Err(err).Send()
