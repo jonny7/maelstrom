@@ -11,7 +11,7 @@ COPY . .
 RUN go mod download
 RUN go build -o bin/maelstrom ./cmd/maelstrom
 
-FROM scratch
+FROM curlimages/curl
 
 WORKDIR /usr/local/bin
 
