@@ -5,7 +5,10 @@ import (
 	"net/http"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
+	"github.com/jonny7/maelstrom/proto/analytics"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type RequestProcessor struct{}
@@ -21,8 +24,18 @@ func (r RequestProcessor) Process(done chan struct{}, work <-chan commander.Even
 		for {
 			select {
 			case msg := <-work:
-				b := msg.Value
-				// @todo env var for host or override in this func https://conduit-server-internal.use1.dev.aws.viacbs.tech
+				var fw analytics.FWRequestEvent
+				err := proto.Unmarshal(msg.Value, &fw)
+				if err != nil {
+					log.Error().Err(err).Send()
+					continue
+				}
+				b, err := protojson.Marshal(fw.Payload)
+				if err != nil {
+					log.Error().Err(err).Send()
+					continue
+				}
+
 				req, err := http.NewRequest(http.MethodPost, host, bytes.NewBuffer(b))
 				if err != nil {
 					log.Error().Err(err).Send()
