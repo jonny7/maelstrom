@@ -2,22 +2,23 @@ package commander
 
 import (
 	"net/http"
+	"sync"
 	"time"
 
-	"github.com/hashicorp/raft"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/rs/zerolog/log"
 )
 
 //go:generate mockgen -source=commander.go -destination mock_commander.go -package commander
 
 type Commander struct {
-	config    Config
-	raft      *raft.Raft
+	config Config
+	//raft      *raft.Raft
 	consumer  Consumer
 	processor Processor
 	client    HTTPClient
 	interrupt chan struct{}
-	metrics   Metrics
+	metrics   metrics.Metrics
 }
 
 type Event struct {
@@ -56,13 +57,43 @@ func (c *Commander) Start(host string) {
 
 	work := c.consumer.Start(c.interrupt)
 	load := c.processor.Process(c.interrupt, work, host)
-	results := c.vortexer(c.interrupt, load)
 
-	c.analytics(c.interrupt, results)
+	workers := 6 // @todo make configurable
+	results := make([]<-chan result, workers)
+	for i := 0; i < 6; i++ {
+		results[i] = c.vortexer(c.interrupt, load)
+	}
+
+	merged := merge(c.interrupt, results...)
+	c.analytics(c.interrupt, merged)
 }
 
-type Metrics interface {
-	Increment()
+func merge(done chan struct{}, channels ...<-chan result) chan result {
+	var wg sync.WaitGroup
+	ch := make(chan result)
+
+	multiplex := func(c <-chan result) {
+		defer wg.Done()
+		for r := range c {
+			select {
+			case <-done:
+				return
+			case ch <- r:
+
+			}
+		}
+	}
+
+	wg.Add(len(channels))
+	for _, c := range channels {
+		go multiplex(c)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+	return ch
 }
 
 func (c *Commander) analytics(done chan struct{}, results chan result) {
@@ -105,31 +136,28 @@ type result struct {
 }
 
 func (c *Commander) vortexer(done chan struct{}, work chan *http.Request) chan result {
-	// @todo make this parallelizable
 	ch := make(chan result)
 	go func() {
+		defer close(ch)
 		for {
 			select {
 			case <-done:
-				log.Debug().Msg("commander received stop signal for http vortex")
+				log.Debug().Msg("commander worker received stop signal for http vortex")
 				return
 			case request := <-work:
-				//time.Sleep(1 * time.Second)
 				log.Debug().Msg("sending HTTP request")
-				go func() {
-					response, err := c.client.Do(request)
-					ch <- result{
-						err:      err,
-						response: response,
-					}
-				}()
+				response, err := c.client.Do(request)
+				ch <- result{
+					err:      err,
+					response: response,
+				}
 			}
 		}
 	}()
 	return ch
 }
 
-func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTTPClient, metrics Metrics) Commander {
+func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTTPClient, metrics metrics.Metrics) Commander {
 	cmdr := Commander{
 		config:    cfg,
 		consumer:  consumer,

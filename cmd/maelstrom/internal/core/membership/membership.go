@@ -57,6 +57,7 @@ func (m *Membership) newSerf() error {
 	// start event handler
 	go m.eventHandler()
 	// if we're not the first node to join then attempt to join the seed nodes
+	// @todo handle bootstrapping
 	if m.StartJoinAddrs != nil {
 		_, err = m.serf.Join(m.StartJoinAddrs, true)
 		if err != nil {
@@ -98,6 +99,9 @@ func (m *Membership) eventHandler() {
 				}
 				m.handleLeave(member)
 			}
+		default:
+			// @todo
+			log.Println("handling defaulted event", e.EventType(), e.String())
 		}
 	}
 }
