@@ -26,7 +26,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Status'
   /healthz:
     get:
       operationId: health
@@ -39,7 +39,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Status'
   /scale:
     post:
       operationId: scale
@@ -60,7 +60,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Status'
   /start:
     post:
       operationId: start
@@ -71,17 +71,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Bool'
+              $ref: '#/components/schemas/Vortex'
       responses:
         '200':
           description: |
            acknowledge the test started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
         default:
           description: error trying to start load test
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Status'
   /stop:
     post:
       operationId: stop
@@ -92,7 +96,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Bool'
+              $ref: '#/components/schemas/Status'
       responses:
         '200':
           description: |
@@ -102,7 +106,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Status'
 
 components:
   schemas:
@@ -123,15 +127,19 @@ components:
       properties:
         number_of_workers:
           type: integer
-    Bool:
+    Vortex:
       type: object
+      required: [host]
       properties:
-        success:
-          type: boolean
-    Error:
+        host:
+          type: string
+    Status:
       type: object
       required:
+        - status
         - message
       properties:
+        status:
+          type: integer
         message:
           type: string

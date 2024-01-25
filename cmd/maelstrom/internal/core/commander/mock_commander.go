@@ -78,17 +78,17 @@ func (m *MockProcessor) EXPECT() *MockProcessorMockRecorder {
 }
 
 // Process mocks base method.
-func (m *MockProcessor) Process(done chan struct{}, work <-chan Event) chan *http.Request {
+func (m *MockProcessor) Process(done chan struct{}, work <-chan Event, host string) chan *http.Request {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Process", done, work)
+	ret := m.ctrl.Call(m, "Process", done, work, host)
 	ret0, _ := ret[0].(chan *http.Request)
 	return ret0
 }
 
 // Process indicates an expected call of Process.
-func (mr *MockProcessorMockRecorder) Process(done, work any) *gomock.Call {
+func (mr *MockProcessorMockRecorder) Process(done, work, host any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockProcessor)(nil).Process), done, work)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockProcessor)(nil).Process), done, work, host)
 }
 
 // MockConsumer is a mock of Consumer interface.

@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	Seeds          []string `env:"BROKERS" envDefault:"localhost:9092"`
+	Seeds          []string `env:"CONSUMER_BROKERS"`
 	ConsumerGroup  string   `env:"CONSUMER_GROUP" envDefault:"maelstrom"`
 	ConsumerTopics []string `env:"CONSUMER_TOPICS,required"`
 	User           string   `env:"USER"`
@@ -31,6 +31,7 @@ func (c Config) DefaultClient() []kgo.Opt {
 	opts = append(opts, kgo.SeedBrokers(c.Seeds...))
 	opts = append(opts, kgo.ConsumerGroup(c.ConsumerGroup))
 	opts = append(opts, kgo.ConsumeTopics(c.ConsumerTopics...))
+
 	return opts
 }
 
