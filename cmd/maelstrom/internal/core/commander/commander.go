@@ -5,11 +5,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/requester"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/rs/zerolog/log"
 )
 
-//go:generate mockgen -source=commander.go -destination mock_commander.go -package commander
+//go:generate mockgen -source=commander.go -destination mock_commander.go -package mocks
 
 type Commander struct {
 	config Config
@@ -21,30 +22,18 @@ type Commander struct {
 	metrics   metrics.Metrics
 }
 
-type Event struct {
-	Key       []byte
-	Value     []byte
-	Headers   []Header
-	Timestamp time.Time
-}
-
-type Header struct {
-	Key   string
-	Value []byte
-}
-
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
 // Processor deserializes and converts events to http requests
 type Processor interface {
-	Process(done chan struct{}, work <-chan Event, host string) chan *http.Request
+	Process(done chan struct{}, work <-chan requester.Event, host string) chan *http.Request
 }
 
 // Consumer provides a mechanism to consume events from any source system
 type Consumer interface {
-	Start(<-chan struct{}) chan Event
+	Start(<-chan struct{}) chan requester.Event
 	Close()
 }
 
