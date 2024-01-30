@@ -26,11 +26,14 @@ func New() (*Config, error) {
 	return &cfg, nil
 }
 
+// @todo expand this
 func (c Config) DefaultClient() []kgo.Opt {
 	var opts []kgo.Opt
 	opts = append(opts, kgo.SeedBrokers(c.Seeds...))
 	opts = append(opts, kgo.ConsumerGroup(c.ConsumerGroup))
 	opts = append(opts, kgo.ConsumeTopics(c.ConsumerTopics...))
+	// @todo Remove this
+	opts = append(opts, kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()))
 
 	return opts
 }

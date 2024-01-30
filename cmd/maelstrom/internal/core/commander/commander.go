@@ -77,9 +77,8 @@ func merge(done chan struct{}, channels ...<-chan result) chan result {
 		for r := range c {
 			select {
 			case <-done:
-				return
+				break
 			case ch <- r:
-
 			}
 		}
 	}
@@ -102,7 +101,6 @@ func (c *Commander) analytics(done chan struct{}, results chan result) {
 		for {
 			select {
 			case <-done:
-				close(results)
 				return
 			case res := <-results:
 				c.metrics.Increment()
@@ -145,8 +143,15 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request) chan r
 				log.Debug().Msg("commander worker received stop signal for http vortex")
 				return
 			case request := <-work:
+				if request == nil {
+					log.Debug().Msg("nil req")
+					continue
+				}
 				log.Debug().Msg("sending HTTP request")
 				response, err := c.client.Do(request)
+				if err != nil {
+					log.Error().Err(err).Send()
+				}
 				ch <- result{
 					err:      err,
 					response: response,

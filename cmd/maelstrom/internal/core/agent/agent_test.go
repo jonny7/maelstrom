@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
-	"github.com/rs/zerolog"
 	"github.com/travisjeffery/go-dynaport"
 	"go.uber.org/mock/gomock"
 )
@@ -20,6 +20,7 @@ func TestAgent(t *testing.T) {
 	processor := commander.NewMockProcessor(ctrl)
 	h := commander.NewMockHTTPClient(ctrl)
 	m := commander.NewMockMetrics(ctrl)
+	l := mocks.NewMockLogger(ctrl)
 
 	for i := 0; i < 3; i++ {
 		ports := dynaport.Get(2)
@@ -46,7 +47,7 @@ func TestAgent(t *testing.T) {
 			}
 		}
 
-		if _, err := New(zerolog.Logger{}, consumer, processor, h, m); err != nil {
+		if _, err := New(l, consumer, processor, h, m); err != nil {
 			t.Errorf("expected no error: %v", err)
 		}
 	}
