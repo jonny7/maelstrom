@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/hashicorp/serf/serf"
-	"github.com/rs/zerolog"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 )
 
 // Member must provide leaving and joining events
@@ -28,7 +28,7 @@ type Membership struct {
 	member Member
 	serf   *serf.Serf
 	events chan serf.Event
-	logger zerolog.Logger
+	logger logging.Logger
 }
 
 // newSerf creates the initial serf.Serf configuration for the member
@@ -68,11 +68,11 @@ func (m *Membership) newSerf() error {
 }
 
 // New creates a new Member with the provided Group and Config
-func New(member Member, config Config, baseLogger zerolog.Logger) (*Membership, error) {
+func New(member Member, config Config, baseLogger logging.Logger) (*Membership, error) {
 	c := &Membership{
 		Config: config,
 		member: member,
-		logger: baseLogger.With().Str("library", "service discovery").Logger(),
+		logger: baseLogger,
 	}
 	if err := c.newSerf(); err != nil {
 		return nil, err
@@ -101,7 +101,10 @@ func (m *Membership) eventHandler() {
 			}
 		default:
 			// @todo
-			log.Println("handling defaulted event", e.EventType(), e.String())
+			m.logger.Log(logging.InfoLevel, "handling default event", logging.KV{
+				Key:   "event type",
+				Value: e.String(),
+			})
 		}
 	}
 }
@@ -127,7 +130,7 @@ func (m *Membership) handleJoin(member serf.Member) {
 		member.Name,
 		member.Tags["rpc_addr"],
 	); err != nil {
-		m.logger.Err(err).Msg("failed to join cluster")
+		m.logger.LogWithError(logging.ErrorLevel, "failed to join cluster", err)
 	}
 }
 
@@ -136,6 +139,6 @@ func (m *Membership) handleLeave(member serf.Member) {
 	if err := m.member.Leave(
 		member.Name,
 	); err != nil {
-		m.logger.Err(err).Msg("failed to leave cluster")
+		m.logger.LogWithError(logging.ErrorLevel, "failed to leave cluster", err)
 	}
 }

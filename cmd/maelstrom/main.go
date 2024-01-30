@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/metrics"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/processor"
 	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
@@ -18,15 +19,25 @@ import (
 )
 
 func main() {
+	logger, err := logging.NewLogger(logging.InfoLevel, 1, os.Stdout, "service", "Maelstrom Application")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// @todo make env or arg
-	client, err := service.NewConsumer(service.Kafka)
+	client, err := service.NewConsumer(service.Kafka, logger)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer client.Close()
 
+	process := processor.NewProcessor(logger)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// @todo same with processor
-	app := service.NewApplication(client, processor.NewProcessor(), &http.Client{}, metrics.New())
+	app := service.NewApplication(client, process, &http.Client{}, logger, metrics.New())
 
 	api := a.New(app)
 

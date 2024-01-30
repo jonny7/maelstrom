@@ -2,24 +2,25 @@ package ui
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/dto"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
 	"github.com/jonny7/maelstrom/ui/components"
 	"github.com/jonny7/maelstrom/ui/views"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 type UI struct {
 	app    application.App
 	cfg    config.Config
-	logger zerolog.Logger
+	logger logging.Logger
 }
 
 func (u UI) Stop(w http.ResponseWriter, _ *http.Request) {
@@ -43,10 +44,13 @@ func (u UI) Scale(w http.ResponseWriter, r *http.Request) {
 }
 
 func New(app application.App) UI {
-	logger := zerolog.New(os.Stdout).With().Str("subsystem", "maelstrom UI").Timestamp().Logger()
+	logger, err := logging.NewLogger(logging.InfoLevel, 1, os.Stdout, "subsystem", "Maelstrom UI")
+	if err != nil {
+		log.Fatal(err)
+	}
 	cfg, err := config.New()
 	if err != nil {
-		logger.Fatal().Err(err).Send()
+		log.Fatal(err)
 	}
 	srv := UI{app: app, cfg: *cfg}
 	srv.logger = logger
@@ -63,14 +67,14 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 	srv := http.Server{Addr: u.cfg.HttpAddress(), Handler: mountRouter(mux)}
 
 	go func() {
-		u.logger.Info().Msgf("starting UI on: %s", u.cfg.HttpAddress())
+		u.logger.Log(logging.InfoLevel, fmt.Sprintf("starting UI on: %s", u.cfg.HttpAddress()))
 		errs <- srv.ListenAndServe()
 	}()
 	go func() {
-		defer log.Info().Msg("shutdown UI server... Goodbye!")
+		defer u.logger.Log(logging.InfoLevel, "shutdown UI server... Goodbye!")
 		for range done {
 			if err := srv.Shutdown(context.Background()); err != nil {
-				log.Error().Err(err).Send()
+				u.logger.LogWithError(logging.ErrorLevel, "unable to shutdown server", err)
 			}
 		}
 	}()

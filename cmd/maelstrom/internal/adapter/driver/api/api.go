@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,11 +13,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/goccy/go-json"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -24,7 +24,7 @@ import (
 
 type Server struct {
 	app    application.App
-	logger zerolog.Logger
+	logger logging.Logger
 	cfg    config.Config
 }
 
@@ -68,10 +68,13 @@ func (s Server) Start(w http.ResponseWriter, r *http.Request) {
 }
 
 func New(app application.App) Server {
-	logger := zerolog.New(os.Stdout).With().Str("subsystem", "maelstrom API").Timestamp().Logger()
+	logger, err := logging.NewLogger(logging.InfoLevel, 1, os.Stdout, "subsystem", "Maelstrom API")
+	if err != nil {
+		log.Fatal(err)
+	}
 	cfg, err := config.New()
 	if err != nil {
-		logger.Fatal().Err(err).Send()
+		log.Fatal(err)
 	}
 	srv := Server{app: app, cfg: *cfg}
 	srv.logger = logger
@@ -104,14 +107,14 @@ func (s Server) Run(done chan struct{}, errs chan error, mountRouter func(router
 	srv := http.Server{Addr: s.cfg.HttpAddress(), Handler: base}
 
 	go func() {
-		s.logger.Info().Msgf("starting API on: %s", s.cfg.HttpAddress())
+		s.logger.Log(logging.InfoLevel, fmt.Sprintf("starting API on %s", s.cfg.HttpAddress()))
 		errs <- srv.ListenAndServe()
 	}()
 	go func() {
-		defer log.Info().Msg("shutdown API server... Goodbye!")
+		defer s.logger.Log(logging.InfoLevel, "shutdown API server... Goodbye!")
 		for range done {
 			if err := srv.Shutdown(context.Background()); err != nil {
-				log.Error().Err(err).Send()
+				s.logger.LogWithError(logging.ErrorLevel, "unable to shutdown server", err)
 			}
 		}
 	}()
