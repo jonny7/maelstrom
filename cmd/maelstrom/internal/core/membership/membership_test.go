@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/hashicorp/serf/serf"
-	"github.com/rs/zerolog"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
 	"github.com/travisjeffery/go-dynaport"
+	"go.uber.org/mock/gomock"
 
 	. "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 	"github.com/stretchr/testify/require"
@@ -37,9 +39,13 @@ func (m *member) Leave(id string) error {
 }
 
 func TestMembership(t *testing.T) {
-	members, m := setupMembership(t, nil)
-	members, _ = setupMembership(t, members)
-	members, _ = setupMembership(t, members)
+
+	ctrl := gomock.NewController(t)
+	log := mocks.NewMockLogger(ctrl)
+
+	members, m := setupMembership(t, nil, log)
+	members, _ = setupMembership(t, members, log)
+	members, _ = setupMembership(t, members, log)
 
 	require.Eventually(t, func() bool {
 		return 2 == len(m.joins) &&
@@ -59,7 +65,7 @@ func TestMembership(t *testing.T) {
 	require.Equal(t, fmt.Sprintf("%d", 2), <-m.leaves)
 }
 
-func setupMembership(t *testing.T, members []*Membership) ([]*Membership, *member) {
+func setupMembership(t *testing.T, members []*Membership, l logging.Logger) ([]*Membership, *member) {
 	id := len(members)
 	ports := dynaport.Get(1)
 	addr := fmt.Sprintf("%s:%d", "127.0.0.1", ports[0])
@@ -80,7 +86,7 @@ func setupMembership(t *testing.T, members []*Membership) ([]*Membership, *membe
 			members[0].BindAddr,
 		}
 	}
-	node, err := New(newMember, c, zerolog.Logger{})
+	node, err := New(newMember, c, l)
 	require.NoError(t, err)
 	members = append(members, node)
 	return members, newMember

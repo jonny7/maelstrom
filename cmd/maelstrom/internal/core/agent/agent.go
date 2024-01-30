@@ -6,10 +6,10 @@ import (
 
 	"github.com/caarlos0/env/v10"
 	"github.com/hashicorp/serf/serf"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/soheilhy/cmux"
 )
@@ -54,7 +54,7 @@ func (a Agent) Members() []serf.Member {
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
 // The agent will also set up all membership for the Serf cluster
-func New(logger zerolog.Logger, consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient, metrics metrics.Metrics) (Service, error) {
+func New(logger logging.Logger, consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient, metrics metrics.Metrics) (Service, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func New(logger zerolog.Logger, consumer commander.Consumer, processor commander
 	go func() {
 		err := a.serve()
 		if err != nil {
-			logger.Error().Err(err).Send()
+			logger.LogWithError(logging.ErrorLevel, "unable to multiplex agent", err)
 		}
 	}()
 
@@ -89,7 +89,7 @@ func New(logger zerolog.Logger, consumer commander.Consumer, processor commander
 }
 
 // setupMembership configures the membership for this Serf node or errors
-func (a *agent) setupMembership(logger zerolog.Logger) error {
+func (a *agent) setupMembership(logger logging.Logger) error {
 	rpcAddr, err := a.config.RPCAddr()
 	if err != nil {
 		return err

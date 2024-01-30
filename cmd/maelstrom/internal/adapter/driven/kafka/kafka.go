@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
-	"github.com/rs/zerolog/log"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 type Kafka struct {
 	client *kgo.Client
+	logger logging.Logger
 }
 
-func MustNewKafka() (*Kafka, error) {
+func MustNewKafka(logger logging.Logger) (*Kafka, error) {
 	cfg, err := config.New()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize kafka: %w", err)
@@ -34,7 +35,7 @@ func MustNewKafka() (*Kafka, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Kafka{client: cl}, nil
+	return &Kafka{client: cl, logger: logger}, nil
 }
 
 func (k Kafka) Start(done <-chan struct{}) chan commander.Event {
@@ -45,7 +46,7 @@ func (k Kafka) Start(done <-chan struct{}) chan commander.Event {
 		for {
 			select {
 			case record := <-records:
-				log.Debug().Msg("creating event from franz record")
+				k.logger.Log(logging.DebugLevel, "")
 				ch <- commander.Event{
 					Key:   record.Key,
 					Value: record.Value,
@@ -62,7 +63,7 @@ func (k Kafka) Start(done <-chan struct{}) chan commander.Event {
 					Timestamp: record.Timestamp,
 				}
 			case <-done:
-				log.Info().Msg("exiting kafka consumer")
+				k.logger.Log(logging.InfoLevel, "exiting kafka consumer")
 				return
 			}
 		}
@@ -85,15 +86,14 @@ func (k Kafka) consume(done <-chan struct{}) chan *kgo.Record {
 		for {
 			select {
 			case <-done:
-				log.Info().Msg("closing client consumer")
+				k.logger.Log(logging.InfoLevel, "closing client consumer")
 				return
 			default:
 				iter := fetches.RecordIter()
 				if !iter.Done() {
 					record := iter.Next()
-					log.Debug().Msg("received message from iterator")
+					k.logger.Log(logging.DebugLevel, "received message from iterator")
 					ch <- record
-					//k.client.CommittedOffsets()
 				}
 			}
 		}
@@ -103,6 +103,6 @@ func (k Kafka) consume(done <-chan struct{}) chan *kgo.Record {
 }
 
 func (k Kafka) Close() {
-	log.Info().Msg("closing kafka")
+	k.logger.Log(logging.InfoLevel, "closing kafka")
 	k.client.Close()
 }

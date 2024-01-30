@@ -4,17 +4,16 @@ import (
 	"bytes"
 	"net/http"
 
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
-	"github.com/jonny7/maelstrom/proto/analytics"
-	"github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
-type RequestProcessor struct{}
+type RequestProcessor struct {
+	logger logging.Logger
+}
 
-func NewProcessor() RequestProcessor {
-	return RequestProcessor{}
+func NewProcessor(logger logging.Logger) RequestProcessor {
+	return RequestProcessor{logger: logger}
 }
 
 func (r RequestProcessor) Process(done chan struct{}, work <-chan commander.Event, host string) chan *http.Request {
@@ -24,26 +23,20 @@ func (r RequestProcessor) Process(done chan struct{}, work <-chan commander.Even
 		for {
 			select {
 			case msg := <-work:
-				var fw analytics.FWRequestEvent
-				err := proto.Unmarshal(msg.Value, &fw)
-				if err != nil {
-					log.Error().Err(err).Send()
-					continue
-				}
-				b, err := protojson.Marshal(fw.Payload)
-				if err != nil {
-					log.Error().Err(err).Send()
-					continue
-				}
+				b := msg.Value
 
 				req, err := http.NewRequest(http.MethodPost, host, bytes.NewBuffer(b))
 				if err != nil {
-					log.Error().Err(err).Send()
+					r.logger.LogWithError(logging.ErrorLevel, "unable to create request", err)
+					continue
+				}
+				if req == nil {
+					// handle closed chan
 					continue
 				}
 				ch <- req
 			case <-done:
-				log.Debug().Msg("closing custom processing")
+				r.logger.Log(logging.InfoLevel, "closing custom processor")
 				return
 			}
 		}
