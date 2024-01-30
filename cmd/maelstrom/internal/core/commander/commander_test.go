@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/mocks"
+	mocksmetrics "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics/mocks"
 	"go.uber.org/mock/gomock"
 )
 
@@ -17,10 +19,10 @@ func TestNewCommander(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := NewMockConsumer(ctrl)
-	processor := NewMockProcessor(ctrl)
-	h := NewMockHTTPClient(ctrl)
-	m := NewMockMetrics(ctrl)
+	consumer := mocks.NewMockConsumer(ctrl)
+	processor := mocks.NewMockProcessor(ctrl)
+	h := mocks.NewMockHTTPClient(ctrl)
+	m := mocksmetrics.NewMockMetrics(ctrl)
 
 	_ = NewCommander(newConfig(t), consumer, processor, h, m)
 }
@@ -40,10 +42,10 @@ func TestCommanderStart(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := NewMockConsumer(ctrl)
-	processor := NewMockProcessor(ctrl)
-	h := NewMockHTTPClient(ctrl)
-	m := NewMockMetrics(ctrl)
+	consumer := mocks.NewMockConsumer(ctrl)
+	processor := mocks.NewMockProcessor(ctrl)
+	h := mocks.NewMockHTTPClient(ctrl)
+	m := mocksmetrics.NewMockMetrics(ctrl)
 
 	consumer.EXPECT().Start(gomock.Any()).Times(1)
 	processor.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
@@ -77,10 +79,10 @@ func TestAnalytics(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := NewMockConsumer(ctrl)
-	processor := NewMockProcessor(ctrl)
-	h := NewMockHTTPClient(ctrl)
-	m := NewMockMetrics(ctrl)
+	consumer := mocks.NewMockConsumer(ctrl)
+	processor := mocks.NewMockProcessor(ctrl)
+	h := mocks.NewMockHTTPClient(ctrl)
+	m := mocksmetrics.NewMockMetrics(ctrl)
 
 	m.EXPECT().Increment().MinTimes(1)
 
@@ -108,10 +110,10 @@ func TestVortexer(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := NewMockConsumer(ctrl)
-	processor := NewMockProcessor(ctrl)
-	h := NewMockHTTPClient(ctrl)
-	m := NewMockMetrics(ctrl)
+	consumer := mocks.NewMockConsumer(ctrl)
+	processor := mocks.NewMockProcessor(ctrl)
+	h := mocks.NewMockHTTPClient(ctrl)
+	m := mocksmetrics.NewMockMetrics(ctrl)
 
 	h.EXPECT().Do(gomock.Any()).MinTimes(1)
 

@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
+	mockscommander "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/mocks"
+	mocksmetrics "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics/mocks"
 	"github.com/travisjeffery/go-dynaport"
 	"go.uber.org/mock/gomock"
 )
@@ -16,10 +17,10 @@ func TestAgent(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := commander.NewMockConsumer(ctrl)
-	processor := commander.NewMockProcessor(ctrl)
-	h := commander.NewMockHTTPClient(ctrl)
-	m := commander.NewMockMetrics(ctrl)
+	consumer := mockscommander.NewMockConsumer(ctrl)
+	processor := mockscommander.NewMockProcessor(ctrl)
+	h := mockscommander.NewMockHTTPClient(ctrl)
+	m := mocksmetrics.NewMockMetrics(ctrl)
 	l := mocks.NewMockLogger(ctrl)
 
 	for i := 0; i < 3; i++ {
