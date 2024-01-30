@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -61,11 +62,11 @@ func main() {
 	for {
 		select {
 		case msg := <-sig:
-			log.Printf("shutting down from signal: %v", msg)
+			logger.Log(logging.InfoLevel, fmt.Sprintf("shutting down from signal: %v", msg))
 			close(done)
 			return
 		case err = <-errs:
-			log.Printf("returning from ListenAndServe: %v", err)
+			logger.LogWithError(logging.ErrorLevel, "returning from ListenAndServe", err)
 			return
 		}
 	}

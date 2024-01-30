@@ -6,7 +6,7 @@ import (
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka/config"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/requester"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
@@ -38,8 +38,8 @@ func MustNewKafka(logger logging.Logger) (*Kafka, error) {
 	return &Kafka{client: cl, logger: logger}, nil
 }
 
-func (k Kafka) Start(done <-chan struct{}) chan commander.Event {
-	ch := make(chan commander.Event)
+func (k Kafka) Start(done <-chan struct{}) chan requester.Event {
+	ch := make(chan requester.Event)
 	records := k.consume(done)
 	go func() {
 		defer close(ch)
@@ -47,13 +47,13 @@ func (k Kafka) Start(done <-chan struct{}) chan commander.Event {
 			select {
 			case record := <-records:
 				k.logger.Log(logging.DebugLevel, "")
-				ch <- commander.Event{
+				ch <- requester.Event{
 					Key:   record.Key,
 					Value: record.Value,
-					Headers: func(record *kgo.Record) []commander.Header {
-						var headers []commander.Header
+					Headers: func(record *kgo.Record) []requester.Header {
+						var headers []requester.Header
 						for _, v := range record.Headers {
-							headers = append(headers, commander.Header{
+							headers = append(headers, requester.Header{
 								Key:   v.Key,
 								Value: v.Value,
 							})

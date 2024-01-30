@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/requester"
 )
 
 type RequestProcessor struct {
@@ -16,7 +16,7 @@ func NewProcessor(logger logging.Logger) RequestProcessor {
 	return RequestProcessor{logger: logger}
 }
 
-func (r RequestProcessor) Process(done chan struct{}, work <-chan commander.Event, host string) chan *http.Request {
+func (r RequestProcessor) Process(done chan struct{}, work <-chan requester.Event, host string) chan *http.Request {
 	ch := make(chan *http.Request)
 	go func() {
 		defer close(ch)
