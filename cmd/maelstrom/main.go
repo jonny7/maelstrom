@@ -17,6 +17,7 @@ import (
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -25,20 +26,28 @@ func main() {
 		log.Fatal(err)
 	}
 
+	m := metrics.NewMetrics()
+
+	go func() {
+		// @todo move this
+		http.Handle("/metrics", promhttp.Handler())
+		_ = http.ListenAndServe(":2112", nil)
+	}()
+
 	// @todo make env or arg
-	client, err := service.NewConsumer(service.Kafka, logger)
+	client, err := service.NewConsumer(service.Kafka, logger, m)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer client.Close()
 
-	process := processor.NewProcessor(logger)
+	process := processor.NewProcessor(logger, m)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// @todo same with processor
-	app := service.NewApplication(client, process, &http.Client{}, logger, metrics.New())
+	app := service.NewApplication(client, process, &http.Client{}, logger, m)
 
 	api := a.New(app)
 

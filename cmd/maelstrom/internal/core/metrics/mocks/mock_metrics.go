@@ -38,14 +38,50 @@ func (m *MockMetrics) EXPECT() *MockMetricsMockRecorder {
 	return m.recorder
 }
 
-// Increment mocks base method.
-func (m *MockMetrics) Increment() {
+// Consumed mocks base method.
+func (m *MockMetrics) Consumed() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Increment")
+	m.ctrl.Call(m, "Consumed")
 }
 
-// Increment indicates an expected call of Increment.
-func (mr *MockMetricsMockRecorder) Increment() *gomock.Call {
+// Consumed indicates an expected call of Consumed.
+func (mr *MockMetricsMockRecorder) Consumed() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Increment", reflect.TypeOf((*MockMetrics)(nil).Increment))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Consumed", reflect.TypeOf((*MockMetrics)(nil).Consumed))
+}
+
+// Processed mocks base method.
+func (m *MockMetrics) Processed() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Processed")
+}
+
+// Processed indicates an expected call of Processed.
+func (mr *MockMetricsMockRecorder) Processed() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Processed", reflect.TypeOf((*MockMetrics)(nil).Processed))
+}
+
+// Requested mocks base method.
+func (m *MockMetrics) Requested() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Requested")
+}
+
+// Requested indicates an expected call of Requested.
+func (mr *MockMetricsMockRecorder) Requested() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Requested", reflect.TypeOf((*MockMetrics)(nil).Requested))
+}
+
+// Response mocks base method.
+func (m *MockMetrics) Response(status int) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Response", status)
+}
+
+// Response indicates an expected call of Response.
+func (mr *MockMetricsMockRecorder) Response(status any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Response", reflect.TypeOf((*MockMetrics)(nil).Response), status)
 }

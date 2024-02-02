@@ -3,8 +3,8 @@ package commander
 import (
 	"net/http"
 	"sync"
-	"time"
 
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/requester"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/rs/zerolog/log"
@@ -19,6 +19,7 @@ type Commander struct {
 	processor Processor
 	client    HTTPClient
 	interrupt chan struct{}
+	logger    logging.Logger
 	metrics   metrics.Metrics
 }
 
@@ -47,9 +48,9 @@ func (c *Commander) Start(host string) {
 	work := c.consumer.Start(c.interrupt)
 	load := c.processor.Process(c.interrupt, work, host)
 
-	workers := 6 // @todo make configurable
+	workers := 12 // @todo make configurable
 	results := make([]<-chan result, workers)
-	for i := 0; i < 6; i++ {
+	for i := 0; i < workers; i++ {
 		results[i] = c.vortexer(c.interrupt, load)
 	}
 
@@ -86,15 +87,16 @@ func merge(done chan struct{}, channels ...<-chan result) chan result {
 
 func (c *Commander) analytics(done chan struct{}, results chan result) {
 	go func() {
-		var i int
 		for {
 			select {
 			case <-done:
 				return
 			case res := <-results:
-				c.metrics.Increment()
-				i++
-				log.Debug().Int64("time", time.Now().Unix()).Msgf("status code: %d, iteration: %d", deriveStatusCode(res.response), i)
+				if res.response != nil {
+					c.metrics.Response(res.response.StatusCode)
+				} else {
+					c.metrics.Response(410)
+				}
 			}
 		}
 	}()
@@ -123,41 +125,45 @@ type result struct {
 }
 
 func (c *Commander) vortexer(done chan struct{}, work chan *http.Request) chan result {
-	ch := make(chan result)
+	ch := make(chan result, 1_000_000)
 	go func() {
 		defer close(ch)
 		for {
 			select {
 			case <-done:
-				log.Debug().Msg("commander worker received stop signal for http vortex")
+				c.logger.Log(logging.InfoLevel, "commander worker received stop signal for http vortex")
 				return
 			case request := <-work:
 				if request == nil {
-					log.Debug().Msg("nil req")
+					c.logger.Log(logging.ErrorLevel, "nil request")
 					continue
 				}
-				log.Debug().Msg("sending HTTP request")
-				response, err := c.client.Do(request)
-				if err != nil {
-					log.Error().Err(err).Send()
-				}
-				ch <- result{
-					err:      err,
-					response: response,
-				}
+				go func() {
+					c.logger.Log(logging.DebugLevel, "sending HTTP request")
+					c.metrics.Requested()
+					response, err := c.client.Do(request)
+					if err != nil {
+						log.Error().Err(err).Send()
+					}
+					ch <- result{
+						err:      err,
+						response: response,
+					}
+				}()
 			}
 		}
 	}()
 	return ch
 }
 
-func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTTPClient, metrics metrics.Metrics) Commander {
+func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTTPClient, logger logging.Logger, metrics metrics.Metrics) Commander {
 	cmdr := Commander{
 		config:    cfg,
 		consumer:  consumer,
 		processor: processor,
 		client:    client,
 		interrupt: make(chan struct{}),
+		logger:    logger,
 		metrics:   metrics,
 	}
 

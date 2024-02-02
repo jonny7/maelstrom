@@ -7,15 +7,17 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/requester"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 type Kafka struct {
-	client *kgo.Client
-	logger logging.Logger
+	client  *kgo.Client
+	logger  logging.Logger
+	metrics metrics.Metrics
 }
 
-func MustNewKafka(logger logging.Logger) (*Kafka, error) {
+func MustNewKafka(logger logging.Logger, metrics metrics.Metrics) (*Kafka, error) {
 	cfg, err := config.New()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize kafka: %w", err)
@@ -35,7 +37,11 @@ func MustNewKafka(logger logging.Logger) (*Kafka, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Kafka{client: cl, logger: logger}, nil
+	return &Kafka{
+		client:  cl,
+		logger:  logger,
+		metrics: metrics,
+	}, nil
 }
 
 func (k Kafka) Start(done <-chan struct{}) chan requester.Event {
@@ -46,7 +52,7 @@ func (k Kafka) Start(done <-chan struct{}) chan requester.Event {
 		for {
 			select {
 			case record := <-records:
-				k.logger.Log(logging.DebugLevel, "")
+				k.metrics.Consumed()
 				ch <- requester.Event{
 					Key:   record.Key,
 					Value: record.Value,
@@ -74,13 +80,6 @@ func (k Kafka) Start(done <-chan struct{}) chan requester.Event {
 func (k Kafka) consume(done <-chan struct{}) chan *kgo.Record {
 	ch := make(chan *kgo.Record)
 
-	fetches := k.client.PollFetches(context.Background())
-	if errs := fetches.Errors(); len(errs) > 0 {
-		// All errors are retried internally when fetching, but non-retriable errors are
-		// returned from polls so that users can notice and take action.
-		panic(fmt.Sprint(errs))
-	}
-
 	go func() {
 		defer close(ch)
 		for {
@@ -89,11 +88,20 @@ func (k Kafka) consume(done <-chan struct{}) chan *kgo.Record {
 				k.logger.Log(logging.InfoLevel, "closing client consumer")
 				return
 			default:
+				fetches := k.client.PollFetches(context.Background())
+				if errs := fetches.Errors(); len(errs) > 0 {
+					for _, e := range errs {
+						k.logger.LogWithError(logging.ErrorLevel, "Kafka fetch errors", e.Err)
+					}
+				}
 				iter := fetches.RecordIter()
 				if !iter.Done() {
 					record := iter.Next()
 					k.logger.Log(logging.DebugLevel, "received message from iterator")
 					ch <- record
+				}
+				if err := k.client.CommitUncommittedOffsets(context.Background()); err != nil {
+					k.logger.LogWithError(logging.ErrorLevel, "failed to commit offsets", err)
 				}
 			}
 		}

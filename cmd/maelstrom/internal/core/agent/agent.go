@@ -67,7 +67,7 @@ func New(logger logging.Logger, consumer commander.Consumer, processor commander
 	}
 
 	// create commander
-	a.commander = commander.NewCommander(cfg.Commander, consumer, processor, client, metrics)
+	a.commander = commander.NewCommander(cfg.Commander, consumer, processor, client, logger, metrics)
 
 	// setup mux or err
 	if err := a.setupMux(); err != nil {

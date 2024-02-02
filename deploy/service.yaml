@@ -37,3 +37,6 @@ spec:
     - name: ui
       port: 4000
       targetPort: 4000
+    - name: metrics
+      port: 2112
+      targetPort: 2112
