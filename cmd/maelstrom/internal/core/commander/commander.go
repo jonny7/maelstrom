@@ -42,13 +42,12 @@ func (c *Commander) Stop() {
 	close(c.interrupt)
 }
 
-func (c *Commander) Start(host string) {
+func (c *Commander) Start(host string, workers int) {
 	c.interrupt = make(chan struct{})
 
 	work := c.consumer.Start(c.interrupt)
 	load := c.processor.Process(c.interrupt, work, host)
 
-	workers := 12 // @todo make configurable
 	results := make([]<-chan result, workers)
 	for i := 0; i < workers; i++ {
 		results[i] = c.vortexer(c.interrupt, load)

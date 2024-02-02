@@ -54,7 +54,7 @@ func TestCommanderStart(t *testing.T) {
 	processor.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	cmdr := NewCommander(newConfig(t), consumer, processor, h, l, m)
-	cmdr.Start("http://localhost:8000")
+	cmdr.Start("http://localhost:8000", 1)
 }
 
 func TestDeriveStatusCode(t *testing.T) {

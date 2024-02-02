@@ -24,7 +24,8 @@ type Status struct {
 
 // Vortex defines model for Vortex.
 type Vortex struct {
-	Host string `json:"host"`
+	Host    string `json:"host"`
+	Workers int    `json:"workers"`
 }
 
 // ScaleJSONRequestBody defines body for Scale for application/json ContentType.

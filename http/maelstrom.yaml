@@ -129,10 +129,12 @@ components:
           type: integer
     Vortex:
       type: object
-      required: [host]
+      required: [host, workers]
       properties:
         host:
           type: string
+        workers:
+          type: integer
     Status:
       type: object
       required:

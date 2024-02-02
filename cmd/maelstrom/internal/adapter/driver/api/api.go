@@ -60,7 +60,7 @@ func (s Server) Start(w http.ResponseWriter, r *http.Request) {
 		render.Status(r, 400)
 		render.Respond(w, r, fmt.Sprintf("the provided host was unable to be parsed: %s", loader.Host))
 	}
-	s.app.Agent.Start(loader.Host)
+	s.app.Agent.Start(loader.Host, loader.Workers)
 	render.Respond(w, r, maelstrom.Status{
 		Message: "success",
 		Status:  http.StatusOK,
