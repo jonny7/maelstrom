@@ -11,12 +11,17 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/metrics"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/processor"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/metrics/prometheus"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/process"
 	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/consumer"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/metrics"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/processor"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/sender"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -26,7 +31,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	m := metrics.NewMetrics()
+	// @todo add flag to disable/enable
+	m := metrics.NewMetrics(prometheus.NewMetrics())
 
 	go func() {
 		// @todo move this
@@ -35,19 +41,24 @@ func main() {
 	}()
 
 	// @todo make env or arg
-	client, err := service.NewConsumer(service.Kafka, logger, m)
+	c, err := kafka.NewFake(m) //kafka.MustNewKafka(logger, m)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	client := consumer.NewConsumer(c)
 	defer client.Close()
 
-	process := processor.NewProcessor(logger, m)
+	proc := process.NewProcessor(logger, m)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// @todo same with processor
-	app := service.NewApplication(client, process, &http.Client{}, logger, m)
+	p := processor.NewProcessor(proc)
+
+	h := sender.NewSender(&http.Client{})
+
+	app := service.NewApplication(client, p, h, logger, m)
 
 	api := a.New(app)
 

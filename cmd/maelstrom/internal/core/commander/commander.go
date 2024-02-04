@@ -3,39 +3,25 @@ package commander
 import (
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/requester"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/rs/zerolog/log"
 )
 
-//go:generate mockgen -source=commander.go -destination mock_commander.go -package mocks
-
 type Commander struct {
 	config Config
 	//raft      *raft.Raft
-	consumer  Consumer
-	processor Processor
-	client    HTTPClient
+	consumer  consumer.Consumer
+	processor processor.Processor
+	client    sender.HTTPDoer
 	interrupt chan struct{}
 	logger    logging.Logger
 	metrics   metrics.Metrics
-}
-
-type HTTPClient interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-// Processor deserializes and converts events to http requests
-type Processor interface {
-	Process(done chan struct{}, work <-chan requester.Event, host string) chan *http.Request
-}
-
-// Consumer provides a mechanism to consume events from any source system
-type Consumer interface {
-	Start(<-chan struct{}) chan requester.Event
-	Close()
 }
 
 func (c *Commander) Stop() {
@@ -141,6 +127,7 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request) chan r
 					c.logger.Log(logging.DebugLevel, "sending HTTP request")
 					c.metrics.Requested()
 					response, err := c.client.Do(request)
+					time.Sleep(1 * time.Millisecond)
 					if err != nil {
 						log.Error().Err(err).Send()
 					}
@@ -155,7 +142,7 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request) chan r
 	return ch
 }
 
-func NewCommander(cfg Config, consumer Consumer, processor Processor, client HTTPClient, logger logging.Logger, metrics metrics.Metrics) Commander {
+func NewCommander(cfg Config, consumer consumer.Consumer, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) Commander {
 	cmdr := Commander{
 		config:    cfg,
 		consumer:  consumer,

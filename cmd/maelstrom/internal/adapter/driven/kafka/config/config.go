@@ -34,6 +34,7 @@ func (c Config) DefaultClient() []kgo.Opt {
 	opts = append(opts, kgo.ConsumerGroup(c.ConsumerGroup))
 	opts = append(opts, kgo.ConsumeTopics(c.ConsumerTopics...))
 	opts = append(opts, kgo.DisableAutoCommit())
+	opts = append(opts, kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()))
 
 	return opts
 }
