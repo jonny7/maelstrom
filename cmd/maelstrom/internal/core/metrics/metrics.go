@@ -1,7 +1,10 @@
 package metrics
 
-//go:generate mockgen -source=metrics.go -destination mock_metrics.go -package mocks
+//go:generate mockgen -source=metrics.go -destination mocks/mock_metrics.go -package mocks
 
 type Metrics interface {
-	Increment()
+	Consumed()
+	Processed()
+	Requested()
+	Response(status int)
 }

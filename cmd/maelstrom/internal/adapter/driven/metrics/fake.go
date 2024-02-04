@@ -1,9 +1,19 @@
 package metrics
 
-type Fake struct{}
+import "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 
-func (f Fake) Increment() {}
+type Nop struct{}
 
-func New() Fake {
-	return Fake{}
+func (n Nop) Consumed() {}
+
+func (n Nop) Processed() {}
+
+func (n Nop) Requested() {}
+
+func (n Nop) Response(_ int) {}
+
+func (n Nop) Increment() {}
+
+func NewNop() metrics.Metrics {
+	return Nop{}
 }

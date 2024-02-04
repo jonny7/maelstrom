@@ -31,3 +31,5 @@ spec:
               name: api
             - containerPort: 4000
               name: ui
+            - containerPort: 2112
+              name: metrics

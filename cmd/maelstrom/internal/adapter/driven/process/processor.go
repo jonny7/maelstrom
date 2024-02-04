@@ -1,4 +1,4 @@
-package processor
+package process
 
 import (
 	"bytes"
@@ -6,14 +6,16 @@ import (
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/requester"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 )
 
 type RequestProcessor struct {
-	logger logging.Logger
+	logger  logging.Logger
+	metrics metrics.Metrics
 }
 
-func NewProcessor(logger logging.Logger) RequestProcessor {
-	return RequestProcessor{logger: logger}
+func NewProcessor(logger logging.Logger, metrics metrics.Metrics) RequestProcessor {
+	return RequestProcessor{logger: logger, metrics: metrics}
 }
 
 func (r RequestProcessor) Process(done chan struct{}, work <-chan requester.Event, host string) chan *http.Request {
@@ -23,6 +25,7 @@ func (r RequestProcessor) Process(done chan struct{}, work <-chan requester.Even
 		for {
 			select {
 			case msg := <-work:
+
 				b := msg.Value
 
 				req, err := http.NewRequest(http.MethodPost, host, bytes.NewBuffer(b))
@@ -32,9 +35,11 @@ func (r RequestProcessor) Process(done chan struct{}, work <-chan requester.Even
 				}
 				if req == nil {
 					// handle closed chan
+					r.logger.Log(logging.ErrorLevel, "req==nil")
 					continue
 				}
 				ch <- req
+				r.metrics.Processed()
 			case <-done:
 				r.logger.Log(logging.InfoLevel, "closing custom processor")
 				return
