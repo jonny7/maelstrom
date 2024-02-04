@@ -5,8 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/mocks"
-	mocksmetrics "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics/mocks"
+	mocklogger "github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
+	mocksconsumer "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer/mocks"
+	mockprocessor "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor/mocks"
+	mocksender "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender/mocks"
+	mockmetrics "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics/mocks"
 	"go.uber.org/mock/gomock"
 )
 
@@ -19,12 +22,13 @@ func TestNewCommander(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := mocks.NewMockConsumer(ctrl)
-	processor := mocks.NewMockProcessor(ctrl)
-	h := mocks.NewMockHTTPClient(ctrl)
-	m := mocksmetrics.NewMockMetrics(ctrl)
+	c := mocksconsumer.NewMockConsumer(ctrl)
+	p := mockprocessor.NewMockProcessor(ctrl)
+	h := mocksender.NewMockHTTPDoer(ctrl)
+	m := mockmetrics.NewMockMetrics(ctrl)
+	l := mocklogger.NewMockLogger(ctrl)
 
-	_ = NewCommander(newConfig(t), consumer, processor, h, m)
+	_ = NewCommander(newConfig(t), c, p, h, l, m)
 }
 
 func TestCommanderStop(t *testing.T) {
@@ -42,16 +46,17 @@ func TestCommanderStart(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := mocks.NewMockConsumer(ctrl)
-	processor := mocks.NewMockProcessor(ctrl)
-	h := mocks.NewMockHTTPClient(ctrl)
-	m := mocksmetrics.NewMockMetrics(ctrl)
+	c := mocksconsumer.NewMockConsumer(ctrl)
+	p := mockprocessor.NewMockProcessor(ctrl)
+	h := mocksender.NewMockHTTPDoer(ctrl)
+	m := mockmetrics.NewMockMetrics(ctrl)
+	l := mocklogger.NewMockLogger(ctrl)
 
-	consumer.EXPECT().Start(gomock.Any()).Times(1)
-	processor.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+	c.EXPECT().Start(gomock.Any()).Times(1)
+	p.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
-	cmdr := NewCommander(newConfig(t), consumer, processor, h, m)
-	cmdr.Start("http://localhost:8000")
+	cmdr := NewCommander(newConfig(t), c, p, h, l, m)
+	cmdr.Start("http://localhost:8000", 1)
 }
 
 func TestDeriveStatusCode(t *testing.T) {
@@ -79,17 +84,18 @@ func TestAnalytics(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := mocks.NewMockConsumer(ctrl)
-	processor := mocks.NewMockProcessor(ctrl)
-	h := mocks.NewMockHTTPClient(ctrl)
-	m := mocksmetrics.NewMockMetrics(ctrl)
+	c := mocksconsumer.NewMockConsumer(ctrl)
+	p := mockprocessor.NewMockProcessor(ctrl)
+	h := mocksender.NewMockHTTPDoer(ctrl)
+	m := mockmetrics.NewMockMetrics(ctrl)
+	l := mocklogger.NewMockLogger(ctrl)
 
-	m.EXPECT().Increment().MinTimes(1)
+	m.EXPECT().Response(gomock.Any()).MinTimes(1)
 
 	done := make(chan struct{})
 	results := make(chan result)
 
-	cmdr := NewCommander(newConfig(t), consumer, processor, h, m)
+	cmdr := NewCommander(newConfig(t), c, p, h, l, m)
 
 	go func() {
 		for i := 0; i < 10; i++ {
@@ -110,17 +116,20 @@ func TestVortexer(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := mocks.NewMockConsumer(ctrl)
-	processor := mocks.NewMockProcessor(ctrl)
-	h := mocks.NewMockHTTPClient(ctrl)
-	m := mocksmetrics.NewMockMetrics(ctrl)
+	c := mocksconsumer.NewMockConsumer(ctrl)
+	p := mockprocessor.NewMockProcessor(ctrl)
+	h := mocksender.NewMockHTTPDoer(ctrl)
+	m := mockmetrics.NewMockMetrics(ctrl)
+	l := mocklogger.NewMockLogger(ctrl)
 
 	h.EXPECT().Do(gomock.Any()).MinTimes(1)
+	m.EXPECT().Requested().MinTimes(1)
+	l.EXPECT().Log(gomock.Any(), gomock.Any()).MinTimes(1)
 
 	done := make(chan struct{})
 	work := make(chan *http.Request)
 
-	cmdr := NewCommander(newConfig(t), consumer, processor, h, m)
+	cmdr := NewCommander(newConfig(t), c, p, h, l, m)
 
 	go func() {
 		for i := 0; i < 10; i++ {

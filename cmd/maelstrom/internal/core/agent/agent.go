@@ -8,6 +8,9 @@ import (
 	"github.com/hashicorp/serf/serf"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/rs/zerolog/log"
@@ -32,9 +35,9 @@ type Agent struct {
 	agent *agent
 }
 
-func (a Agent) Start(host string) {
+func (a Agent) Start(host string, workers int) {
 	log.Debug().Msg("starting consumer and processor")
-	a.agent.commander.Start(host)
+	a.agent.commander.Start(host, workers)
 }
 
 func (a Agent) Stop() {
@@ -44,7 +47,7 @@ func (a Agent) Stop() {
 
 type Service interface {
 	Members() []serf.Member
-	Start(host string)
+	Start(host string, workers int)
 	Stop()
 }
 
@@ -54,7 +57,7 @@ func (a Agent) Members() []serf.Member {
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
 // The agent will also set up all membership for the Serf cluster
-func New(logger logging.Logger, consumer commander.Consumer, processor commander.Processor, client commander.HTTPClient, metrics metrics.Metrics) (Service, error) {
+func New(logger logging.Logger, consumer consumer.Consumer, processor processor.Processor, client sender.HTTPDoer, metrics metrics.Metrics) (Service, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
@@ -67,7 +70,7 @@ func New(logger logging.Logger, consumer commander.Consumer, processor commander
 	}
 
 	// create commander
-	a.commander = commander.NewCommander(cfg.Commander, consumer, processor, client, metrics)
+	a.commander = commander.NewCommander(cfg.Commander, consumer, processor, client, logger, metrics)
 
 	// setup mux or err
 	if err := a.setupMux(); err != nil {

@@ -6,9 +6,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
-	mockscommander "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/mocks"
-	mocksmetrics "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics/mocks"
+	mocklogger "github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
+	mocksconsumer "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer/mocks"
+	mockprocessor "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor/mocks"
+	mocksender "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender/mocks"
+	mockmetrics "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics/mocks"
 	"github.com/travisjeffery/go-dynaport"
 	"go.uber.org/mock/gomock"
 )
@@ -17,11 +19,11 @@ func TestAgent(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	consumer := mockscommander.NewMockConsumer(ctrl)
-	processor := mockscommander.NewMockProcessor(ctrl)
-	h := mockscommander.NewMockHTTPClient(ctrl)
-	m := mocksmetrics.NewMockMetrics(ctrl)
-	l := mocks.NewMockLogger(ctrl)
+	c := mocksconsumer.NewMockConsumer(ctrl)
+	p := mockprocessor.NewMockProcessor(ctrl)
+	h := mocksender.NewMockHTTPDoer(ctrl)
+	m := mockmetrics.NewMockMetrics(ctrl)
+	l := mocklogger.NewMockLogger(ctrl)
 
 	for i := 0; i < 3; i++ {
 		ports := dynaport.Get(2)
@@ -48,7 +50,7 @@ func TestAgent(t *testing.T) {
 			}
 		}
 
-		if _, err := New(l, consumer, processor, h, m); err != nil {
+		if _, err := New(l, c, p, h, m); err != nil {
 			t.Errorf("expected no error: %v", err)
 		}
 	}

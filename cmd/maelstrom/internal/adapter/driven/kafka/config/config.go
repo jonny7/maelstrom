@@ -15,6 +15,7 @@ type Config struct {
 	User           string   `env:"USER"`
 	Password       string   `env:"PASSWORD"`
 	EnableTLS      bool     `env:"ENABLE_TLS" envDefault:"false"`
+	EnableMetrics  bool     `env:"ENABLE_METRICS" envDefault:"true"`
 }
 
 func New() (*Config, error) {
@@ -32,7 +33,7 @@ func (c Config) DefaultClient() []kgo.Opt {
 	opts = append(opts, kgo.SeedBrokers(c.Seeds...))
 	opts = append(opts, kgo.ConsumerGroup(c.ConsumerGroup))
 	opts = append(opts, kgo.ConsumeTopics(c.ConsumerTopics...))
-	// @todo Remove this
+	opts = append(opts, kgo.DisableAutoCommit())
 	opts = append(opts, kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()))
 
 	return opts
