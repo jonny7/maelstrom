@@ -13,7 +13,7 @@ type Node struct {
 
 // Scale defines model for Scale.
 type Scale struct {
-	NumberOfWorkers *int `json:"number_of_workers,omitempty"`
+	Replicas int `json:"replicas"`
 }
 
 // Status defines model for Status.
@@ -24,8 +24,10 @@ type Status struct {
 
 // Vortex defines model for Vortex.
 type Vortex struct {
-	Host    string `json:"host"`
-	Workers int    `json:"workers"`
+	ConsumerBuffer int    `json:"consumer_buffer"`
+	Host           string `json:"host"`
+	ResultBuffer   int    `json:"result_buffer"`
+	Workers        int    `json:"workers"`
 }
 
 // ScaleJSONRequestBody defines body for Scale for application/json ContentType.

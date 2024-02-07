@@ -60,7 +60,7 @@ func (s Server) Start(w http.ResponseWriter, r *http.Request) {
 		render.Status(r, 400)
 		render.Respond(w, r, fmt.Sprintf("the provided host was unable to be parsed: %s", loader.Host))
 	}
-	s.app.Agent.Start(loader.Host, loader.Workers)
+	s.app.Agent.Start(loader.Host, loader.Workers, loader.ConsumerBuffer, loader.ResultBuffer)
 	render.Respond(w, r, maelstrom.Status{
 		Message: "success",
 		Status:  http.StatusOK,
@@ -158,7 +158,7 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sc := *cur
-	sc.Spec.Replicas = int32(*newScale.NumberOfWorkers)
+	sc.Spec.Replicas = int32(newScale.Replicas)
 
 	_, err := clientSet.AppsV1().
 		StatefulSets(s.cfg.K8s.Namespace).

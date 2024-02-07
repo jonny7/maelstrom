@@ -123,17 +123,21 @@ components:
           type: array
     Scale:
       type: object
-      required: [numberOfWorkers]
+      required: [replicas]
       properties:
-        number_of_workers:
+        replicas:
           type: integer
     Vortex:
       type: object
-      required: [host, workers]
+      required: [host, workers, consumer_buffer, result_buffer]
       properties:
         host:
           type: string
         workers:
+          type: integer
+        consumer_buffer:
+          type: integer
+        result_buffer:
           type: integer
     Status:
       type: object
