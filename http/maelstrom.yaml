@@ -157,14 +157,28 @@ components:
       required: [host, workers, consumer_buffer, result_buffer]
       properties:
         id:
+          description: uuid of created load test
           type: string
         host:
+          description: host / url to hit
           type: string
+        jobs:
+          description: number of goroutines consuming / processing. eg 2 jobs will create two consumers + processors
+          type: integer
         workers:
+          description: |- 
+            number of workers per job, remember that IO is blocking on the goroutine, so you can up this and not be CPU 
+            throttled. A good starting point on a 8 vcpu machine is 10 jobs, 36 workers. Depending on the target's response 
+            time and level of processing needed.
           type: integer
         consumer_buffer:
+          description: |- 
+            tuneable buffers for the consumer + processor, this can be unbuffered, though buffering may make this
+            go faster. But you'd need to change these per workload and manage system memory and contention
           type: integer
         result_buffer:
+          description: |-
+            same as above, but for the vortexer and result processing.
           type: integer
     Status:
       type: object

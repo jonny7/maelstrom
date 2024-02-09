@@ -24,11 +24,26 @@ type Status struct {
 
 // Vortex defines model for Vortex.
 type Vortex struct {
-	ConsumerBuffer int     `json:"consumer_buffer"`
-	Host           string  `json:"host"`
-	Id             *string `json:"id,omitempty"`
-	ResultBuffer   int     `json:"result_buffer"`
-	Workers        int     `json:"workers"`
+	// ConsumerBuffer tuneable buffers for the consumer + processor, this can be unbuffered, though buffering may make this
+	// go faster. But you'd need to change these per workload and manage system memory and contention
+	ConsumerBuffer int `json:"consumer_buffer"`
+
+	// Host host / url to hit
+	Host string `json:"host"`
+
+	// Id uuid of created load test
+	Id *string `json:"id,omitempty"`
+
+	// Jobs number of goroutines consuming / processing. eg 2 jobs will create two consumers + processors
+	Jobs *int `json:"jobs,omitempty"`
+
+	// ResultBuffer same as above, but for the vortexer and result processing.
+	ResultBuffer int `json:"result_buffer"`
+
+	// Workers number of workers per job, remember that IO is blocking on the goroutine, so you can up this and not be CPU
+	// throttled. A good starting point on a 8 vcpu machine is 10 jobs, 36 workers. Depending on the target's response
+	// time and level of processing needed.
+	Workers int `json:"workers"`
 }
 
 // ReplicasJSONRequestBody defines body for Replicas for application/json ContentType.
