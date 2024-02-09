@@ -44,8 +44,8 @@ func MustNewKafka(logger logging.Logger, metrics metrics.Metrics) (*Kafka, error
 	}, nil
 }
 
-func (k Kafka) Start(done <-chan struct{}) chan requester.Event {
-	ch := make(chan requester.Event)
+func (k Kafka) Start(done <-chan struct{}, buffer int) chan requester.Event {
+	ch := make(chan requester.Event, buffer)
 	records := k.consume(done)
 	go func() {
 		defer close(ch)

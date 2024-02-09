@@ -1,8 +1,8 @@
 openapi: "3.0.0"
 info:
-  version: 0.0.1
-  title: Maelstrom members
-  description: |
+  version: 0.0.2
+  title: Maelstrom
+  description: |-
     open-api spec for Maelstrom
 servers:
   - url: https://{hostname}/api
@@ -15,8 +15,35 @@ paths:
       operationId: nodes
       responses:
         '200':
-          description: | 
+          description: |- 
             get the current set of maelstrom nodes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Node'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /nodes/{id}:
+    get:
+      description: |-
+        returns a single node based on ID
+      operationId: findNodeByID
+      parameters:
+        - name: id
+          in: path
+          description: ID of node to fetch
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: node response
           content:
             application/json:
               schema:
@@ -32,7 +59,7 @@ paths:
       operationId: health
       responses:
         '204':
-          description: |
+          description: |-
             kubernetes healthchecks
         default:
           description: error obtaining health
@@ -40,20 +67,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
-  /scale:
+  /replicas:
     post:
-      operationId: scale
+      operationId: replicas
       requestBody:
-        description: |
-          scale the number of nodes through K8s API
+        description: |-
+          scale the number of statefulsets through K8s API
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Scale'
+              $ref: '#/components/schemas/Replicas'
       responses:
-        '204':
-          description: |
+        '202':
+          description: |-
             kubernetes healthchecks
         default:
           description: error obtaining health
@@ -61,11 +88,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
-  /start:
+  /vortex:
     post:
-      operationId: start
+      operationId: vortex
       requestBody:
-        description: |
+        description: |-
          start the load test
         required: true
         content:
@@ -74,24 +101,22 @@ paths:
               $ref: '#/components/schemas/Vortex'
       responses:
         '200':
-          description: |
-           acknowledge the test started
+          description: |-
+           confirm the test started with the following configuration
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Status'
+                $ref: '#/components/schemas/Vortex'
         default:
           description: error trying to start load test
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
-  /stop:
-    post:
+    delete:
       operationId: stop
       requestBody:
-        description: |
-          stop the load test
+        description: stop the load test
         required: true
         content:
           application/json:
@@ -99,7 +124,7 @@ paths:
               $ref: '#/components/schemas/Status'
       responses:
         '200':
-          description: |
+          description: |-
             stop the load test
         default:
           description: error trying to start load test
@@ -121,19 +146,39 @@ components:
           type: integer
         Tags:
           type: array
-    Scale:
+    Replicas:
       type: object
-      required: [numberOfWorkers]
+      required: [replicas]
       properties:
-        number_of_workers:
+        replicas:
           type: integer
     Vortex:
       type: object
-      required: [host, workers]
+      required: [host, jobs, workers, consumer_buffer, result_buffer]
       properties:
-        host:
+        id:
+          description: uuid of created load test
           type: string
+        host:
+          description: host / url to hit
+          type: string
+        jobs:
+          description: number of goroutines consuming / processing. eg 2 jobs will create two consumers + processors
+          type: integer
         workers:
+          description: |- 
+            number of workers per job, remember that IO is blocking on the goroutine, so you can up this and not be CPU 
+            throttled. A good starting point on a 8 vcpu machine is 10 jobs, 36 workers. Depending on the target's response 
+            time and level of processing needed.
+          type: integer
+        consumer_buffer:
+          description: |- 
+            tuneable buffers for the consumer + processor, this can be unbuffered, though buffering may make this
+            go faster. But you'd need to change these per workload and manage system memory and contention
+          type: integer
+        result_buffer:
+          description: |-
+            same as above, but for the vortexer and result processing.
           type: integer
     Status:
       type: object

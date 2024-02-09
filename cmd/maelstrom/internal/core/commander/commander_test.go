@@ -52,32 +52,11 @@ func TestCommanderStart(t *testing.T) {
 	m := mockmetrics.NewMockMetrics(ctrl)
 	l := mocklogger.NewMockLogger(ctrl)
 
-	c.EXPECT().Start(gomock.Any()).Times(1)
-	p.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+	c.EXPECT().Start(gomock.Any(), gomock.Any()).Times(1)
+	p.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	cmdr := NewCommander(newConfig(t), c, p, h, l, m)
-	cmdr.Start("http://localhost:8000", 1)
-}
-
-func TestDeriveStatusCode(t *testing.T) {
-	data := []struct {
-		name     string
-		response *http.Response
-		want     int
-	}{
-		{name: "nil HTTP response", response: nil, want: 500},
-		{name: "200 response", response: &http.Response{StatusCode: 200}, want: 200},
-		{name: "404 response", response: &http.Response{StatusCode: 404}, want: 404},
-	}
-
-	for _, d := range data {
-		t.Run(d.name, func(t *testing.T) {
-			got := deriveStatusCode(d.response)
-			if got != d.want {
-				t.Errorf("expected %d but got %d", d.want, got)
-			}
-		})
-	}
+	cmdr.Start("http://localhost:8000", 1, 10, 20, 0)
 }
 
 func TestAnalytics(t *testing.T) {
@@ -93,7 +72,7 @@ func TestAnalytics(t *testing.T) {
 	m.EXPECT().Response(gomock.Any()).MinTimes(1)
 
 	done := make(chan struct{})
-	results := make(chan result)
+	results := make(chan result, 10)
 
 	cmdr := NewCommander(newConfig(t), c, p, h, l, m)
 
@@ -138,7 +117,7 @@ func TestVortexer(t *testing.T) {
 		}
 	}()
 
-	cmdr.vortexer(done, work)
+	cmdr.vortexer(done, work, 5)
 	time.Sleep(500 * time.Millisecond)
 	close(done)
 	time.Sleep(500 * time.Millisecond)

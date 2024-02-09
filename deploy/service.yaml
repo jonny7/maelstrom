@@ -25,7 +25,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: maelstrom-api-svc
-  namespace: pvp
+  namespace: default
 spec:
   type: NodePort
   selector:
@@ -39,7 +39,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: maelstrom-ui-svc
-  namespace: pvp
+  namespace: default
 spec:
   type: NodePort
   selector:
@@ -53,7 +53,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: maelstrom-metrics-svc
-  namespace: pvp
+  namespace: default
 spec:
   type: NodePort
   selector:

@@ -41,15 +41,15 @@ func (m *MockProcessor) EXPECT() *MockProcessorMockRecorder {
 }
 
 // Process mocks base method.
-func (m *MockProcessor) Process(done chan struct{}, work <-chan requester.Event, host string) chan *http.Request {
+func (m *MockProcessor) Process(done chan struct{}, work <-chan requester.Event, host string, buffer int) chan *http.Request {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Process", done, work, host)
+	ret := m.ctrl.Call(m, "Process", done, work, host, buffer)
 	ret0, _ := ret[0].(chan *http.Request)
 	return ret0
 }
 
 // Process indicates an expected call of Process.
-func (mr *MockProcessorMockRecorder) Process(done, work, host any) *gomock.Call {
+func (mr *MockProcessorMockRecorder) Process(done, work, host, buffer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockProcessor)(nil).Process), done, work, host)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockProcessor)(nil).Process), done, work, host, buffer)
 }

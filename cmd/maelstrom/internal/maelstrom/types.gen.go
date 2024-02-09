@@ -11,9 +11,9 @@ type Node struct {
 	Tags *[]interface{} `json:"Tags,omitempty"`
 }
 
-// Scale defines model for Scale.
-type Scale struct {
-	NumberOfWorkers *int `json:"number_of_workers,omitempty"`
+// Replicas defines model for Replicas.
+type Replicas struct {
+	Replicas int `json:"replicas"`
 }
 
 // Status defines model for Status.
@@ -24,15 +24,33 @@ type Status struct {
 
 // Vortex defines model for Vortex.
 type Vortex struct {
-	Host    string `json:"host"`
-	Workers int    `json:"workers"`
+	// ConsumerBuffer tuneable buffers for the consumer + processor, this can be unbuffered, though buffering may make this
+	// go faster. But you'd need to change these per workload and manage system memory and contention
+	ConsumerBuffer int `json:"consumer_buffer"`
+
+	// Host host / url to hit
+	Host string `json:"host"`
+
+	// Id uuid of created load test
+	Id *string `json:"id,omitempty"`
+
+	// Jobs number of goroutines consuming / processing. eg 2 jobs will create two consumers + processors
+	Jobs int `json:"jobs"`
+
+	// ResultBuffer same as above, but for the vortexer and result processing.
+	ResultBuffer int `json:"result_buffer"`
+
+	// Workers number of workers per job, remember that IO is blocking on the goroutine, so you can up this and not be CPU
+	// throttled. A good starting point on a 8 vcpu machine is 10 jobs, 36 workers. Depending on the target's response
+	// time and level of processing needed.
+	Workers int `json:"workers"`
 }
 
-// ScaleJSONRequestBody defines body for Scale for application/json ContentType.
-type ScaleJSONRequestBody = Scale
-
-// StartJSONRequestBody defines body for Start for application/json ContentType.
-type StartJSONRequestBody = Vortex
+// ReplicasJSONRequestBody defines body for Replicas for application/json ContentType.
+type ReplicasJSONRequestBody = Replicas
 
 // StopJSONRequestBody defines body for Stop for application/json ContentType.
 type StopJSONRequestBody = Status
+
+// VortexJSONRequestBody defines body for Vortex for application/json ContentType.
+type VortexJSONRequestBody = Vortex

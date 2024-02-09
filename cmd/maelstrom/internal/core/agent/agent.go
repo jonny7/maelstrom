@@ -35,9 +35,9 @@ type Agent struct {
 	agent *agent
 }
 
-func (a Agent) Start(host string, workers int) {
+func (a Agent) Start(host string, jobs, workers int, cbuf, rbuf int) {
 	log.Debug().Msg("starting consumer and processor")
-	a.agent.commander.Start(host, workers)
+	a.agent.commander.Start(host, jobs, workers, cbuf, rbuf)
 }
 
 func (a Agent) Stop() {
@@ -47,7 +47,7 @@ func (a Agent) Stop() {
 
 type Service interface {
 	Members() []serf.Member
-	Start(host string, workers int)
+	Start(host string, jobs, workers int, cbuf, rbuf int)
 	Stop()
 }
 
