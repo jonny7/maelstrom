@@ -23,23 +23,28 @@ type UI struct {
 	logger logging.Logger
 }
 
+func (u UI) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u UI) Replicas(w http.ResponseWriter, r *http.Request) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (u UI) Stop(w http.ResponseWriter, _ *http.Request) {
 	u.app.Agent.Stop()
 	w.WriteHeader(200)
 }
 
-func (u UI) Start(w http.ResponseWriter, _ *http.Request) {
+func (u UI) Vortex(w http.ResponseWriter, _ *http.Request) {
 	// @todo
 	u.app.Agent.Start("url", 4, 0, 0)
 	w.WriteHeader(200)
 }
 
 func (u UI) Health(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u UI) Scale(w http.ResponseWriter, r *http.Request) {
 	//TODO implement me
 	panic("implement me")
 }

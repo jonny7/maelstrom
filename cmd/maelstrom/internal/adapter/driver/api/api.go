@@ -28,6 +28,11 @@ type Server struct {
 	cfg    config.Config
 }
 
+func (s Server) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (s Server) Stop(w http.ResponseWriter, r *http.Request) {
 	s.app.Agent.Stop()
 	render.Respond(w, r, maelstrom.Status{
@@ -36,7 +41,7 @@ func (s Server) Stop(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s Server) Start(w http.ResponseWriter, r *http.Request) {
+func (s Server) Vortex(w http.ResponseWriter, r *http.Request) {
 	var loader maelstrom.Vortex
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -90,8 +95,8 @@ func setupMiddlewares(router *chi.Mux) {
 func (s Server) setupRoutes(router *chi.Mux) {
 	router.Get("/healthz", s.Health)
 	router.Get("/nodes", s.Nodes)
-	router.Post("/scale", s.Scale)
-	router.Post("/start", s.Start)
+	router.Post("/scale", s.Replicas)
+	router.Post("/start", s.Vortex)
 }
 
 func (s Server) Run(done chan struct{}, errs chan error, mountRouter func(router chi.Router) http.Handler) {
@@ -129,8 +134,8 @@ func (s Server) Nodes(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, members)
 }
 
-func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
-	var newScale maelstrom.Scale
+func (s Server) Replicas(w http.ResponseWriter, r *http.Request) {
+	var newScale maelstrom.Replicas
 	if err := render.Decode(r, &newScale); err != nil {
 		render.Status(r, http.StatusBadRequest)
 		render.Respond(w, r, maelstrom.Status{Message: "unable to decode body"})
@@ -140,7 +145,7 @@ func (s Server) Scale(w http.ResponseWriter, r *http.Request) {
 	cfg, buildErr := clientcmd.BuildConfigFromFlags("", "")
 	if buildErr != nil {
 		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%e", buildErr)})
+		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%s", buildErr.Error())})
 	}
 
 	clientSet, cfgErr := kubernetes.NewForConfig(cfg)

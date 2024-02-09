@@ -11,8 +11,8 @@ type Node struct {
 	Tags *[]interface{} `json:"Tags,omitempty"`
 }
 
-// Scale defines model for Scale.
-type Scale struct {
+// Replicas defines model for Replicas.
+type Replicas struct {
 	Replicas int `json:"replicas"`
 }
 
@@ -24,17 +24,18 @@ type Status struct {
 
 // Vortex defines model for Vortex.
 type Vortex struct {
-	ConsumerBuffer int    `json:"consumer_buffer"`
-	Host           string `json:"host"`
-	ResultBuffer   int    `json:"result_buffer"`
-	Workers        int    `json:"workers"`
+	ConsumerBuffer int     `json:"consumer_buffer"`
+	Host           string  `json:"host"`
+	Id             *string `json:"id,omitempty"`
+	ResultBuffer   int     `json:"result_buffer"`
+	Workers        int     `json:"workers"`
 }
 
-// ScaleJSONRequestBody defines body for Scale for application/json ContentType.
-type ScaleJSONRequestBody = Scale
-
-// StartJSONRequestBody defines body for Start for application/json ContentType.
-type StartJSONRequestBody = Vortex
+// ReplicasJSONRequestBody defines body for Replicas for application/json ContentType.
+type ReplicasJSONRequestBody = Replicas
 
 // StopJSONRequestBody defines body for Stop for application/json ContentType.
 type StopJSONRequestBody = Status
+
+// VortexJSONRequestBody defines body for Vortex for application/json ContentType.
+type VortexJSONRequestBody = Vortex

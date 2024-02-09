@@ -1,8 +1,8 @@
 openapi: "3.0.0"
 info:
-  version: 0.0.1
-  title: Maelstrom members
-  description: |
+  version: 0.0.2
+  title: Maelstrom
+  description: |-
     open-api spec for Maelstrom
 servers:
   - url: https://{hostname}/api
@@ -15,8 +15,35 @@ paths:
       operationId: nodes
       responses:
         '200':
-          description: | 
+          description: |- 
             get the current set of maelstrom nodes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Node'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /nodes/{id}:
+    get:
+      description: |-
+        returns a single node based on ID
+      operationId: findNodeByID
+      parameters:
+        - name: id
+          in: path
+          description: ID of node to fetch
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: node response
           content:
             application/json:
               schema:
@@ -32,7 +59,7 @@ paths:
       operationId: health
       responses:
         '204':
-          description: |
+          description: |-
             kubernetes healthchecks
         default:
           description: error obtaining health
@@ -40,20 +67,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
-  /scale:
+  /replicas:
     post:
-      operationId: scale
+      operationId: replicas
       requestBody:
-        description: |
-          scale the number of nodes through K8s API
+        description: |-
+          scale the number of statefulsets through K8s API
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Scale'
+              $ref: '#/components/schemas/Replicas'
       responses:
-        '204':
-          description: |
+        '202':
+          description: |-
             kubernetes healthchecks
         default:
           description: error obtaining health
@@ -61,11 +88,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
-  /start:
+  /vortex:
     post:
-      operationId: start
+      operationId: vortex
       requestBody:
-        description: |
+        description: |-
          start the load test
         required: true
         content:
@@ -74,24 +101,22 @@ paths:
               $ref: '#/components/schemas/Vortex'
       responses:
         '200':
-          description: |
-           acknowledge the test started
+          description: |-
+           confirm the test started with the following configuration
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Status'
+                $ref: '#/components/schemas/Vortex'
         default:
           description: error trying to start load test
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
-  /stop:
-    post:
+    delete:
       operationId: stop
       requestBody:
-        description: |
-          stop the load test
+        description: stop the load test
         required: true
         content:
           application/json:
@@ -99,7 +124,7 @@ paths:
               $ref: '#/components/schemas/Status'
       responses:
         '200':
-          description: |
+          description: |-
             stop the load test
         default:
           description: error trying to start load test
@@ -121,7 +146,7 @@ components:
           type: integer
         Tags:
           type: array
-    Scale:
+    Replicas:
       type: object
       required: [replicas]
       properties:
@@ -131,6 +156,8 @@ components:
       type: object
       required: [host, workers, consumer_buffer, result_buffer]
       properties:
+        id:
+          type: string
         host:
           type: string
         workers:
