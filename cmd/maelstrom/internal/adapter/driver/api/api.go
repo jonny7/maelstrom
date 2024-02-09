@@ -95,8 +95,8 @@ func setupMiddlewares(router *chi.Mux) {
 func (s Server) setupRoutes(router *chi.Mux) {
 	router.Get("/healthz", s.Health)
 	router.Get("/nodes", s.Nodes)
-	router.Post("/scale", s.Replicas)
-	router.Post("/start", s.Vortex)
+	router.Post("/replicas", s.Replicas)
+	router.Post("/vortex", s.Vortex)
 }
 
 func (s Server) Run(done chan struct{}, errs chan error, mountRouter func(router chi.Router) http.Handler) {
