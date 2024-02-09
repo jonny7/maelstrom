@@ -27,16 +27,16 @@ func (c *Commander) Stop() {
 	close(c.interrupt)
 }
 
-func (c *Commander) Start(host string, workers int, cbuf, rbuf int) {
+func (c *Commander) Start(host string, jobs, workers, cbuf, rbuf int) {
 	c.interrupt = make(chan struct{})
 
-	for i := 0; i < workers; i++ {
+	for j := 0; j < jobs; j++ {
 		work := c.consumer.Start(c.interrupt, cbuf)
 		load := c.processor.Process(c.interrupt, work, host, cbuf)
 
-		results := make([]<-chan result, rbuf)
-		for j := 0; j < workers; j++ {
-			results[j] = c.vortexer(c.interrupt, load, rbuf)
+		results := make([]<-chan result, workers)
+		for w := 0; w < workers; w++ {
+			results[w] = c.vortexer(c.interrupt, load, rbuf)
 		}
 
 		merged := merge(c.interrupt, results...)

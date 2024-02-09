@@ -56,7 +56,7 @@ func TestCommanderStart(t *testing.T) {
 	p.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	cmdr := NewCommander(newConfig(t), c, p, h, l, m)
-	cmdr.Start("http://localhost:8000", 1, 10, 20)
+	cmdr.Start("http://localhost:8000", 1, 10, 20, 0)
 }
 
 func TestAnalytics(t *testing.T) {

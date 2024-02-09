@@ -42,7 +42,7 @@ func (s Server) Stop(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Server) Vortex(w http.ResponseWriter, r *http.Request) {
-	var loader maelstrom.Vortex
+	var vortex maelstrom.Vortex
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
@@ -52,7 +52,7 @@ func (s Server) Vortex(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	err = json.Unmarshal(b, &loader)
+	err = json.Unmarshal(b, &vortex)
 	if err != nil {
 		render.Status(r, 400)
 		render.Respond(w, r, maelstrom.Status{
@@ -61,11 +61,11 @@ func (s Server) Vortex(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	if _, err = url.Parse(loader.Host); err != nil {
+	if _, err = url.Parse(vortex.Host); err != nil {
 		render.Status(r, 400)
-		render.Respond(w, r, fmt.Sprintf("the provided host was unable to be parsed: %s", loader.Host))
+		render.Respond(w, r, fmt.Sprintf("the provided host was unable to be parsed: %s", vortex.Host))
 	}
-	s.app.Agent.Start(loader.Host, loader.Workers, loader.ConsumerBuffer, loader.ResultBuffer)
+	s.app.Agent.Start(vortex.Host, vortex.Jobs, vortex.Workers, vortex.ConsumerBuffer, vortex.ResultBuffer)
 	render.Respond(w, r, maelstrom.Status{
 		Message: "success",
 		Status:  http.StatusOK,

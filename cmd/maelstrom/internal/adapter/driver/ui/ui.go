@@ -40,7 +40,7 @@ func (u UI) Stop(w http.ResponseWriter, _ *http.Request) {
 
 func (u UI) Vortex(w http.ResponseWriter, _ *http.Request) {
 	// @todo
-	u.app.Agent.Start("url", 4, 0, 0)
+	u.app.Agent.Start("url", 4, 1, 0, 0)
 	w.WriteHeader(200)
 }
 

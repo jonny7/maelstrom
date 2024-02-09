@@ -35,7 +35,7 @@ type Vortex struct {
 	Id *string `json:"id,omitempty"`
 
 	// Jobs number of goroutines consuming / processing. eg 2 jobs will create two consumers + processors
-	Jobs *int `json:"jobs,omitempty"`
+	Jobs int `json:"jobs"`
 
 	// ResultBuffer same as above, but for the vortexer and result processing.
 	ResultBuffer int `json:"result_buffer"`

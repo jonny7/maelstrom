@@ -154,7 +154,7 @@ components:
           type: integer
     Vortex:
       type: object
-      required: [host, workers, consumer_buffer, result_buffer]
+      required: [host, jobs, workers, consumer_buffer, result_buffer]
       properties:
         id:
           description: uuid of created load test
