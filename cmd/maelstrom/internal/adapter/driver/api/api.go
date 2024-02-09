@@ -145,7 +145,7 @@ func (s Server) Replicas(w http.ResponseWriter, r *http.Request) {
 	cfg, buildErr := clientcmd.BuildConfigFromFlags("", "")
 	if buildErr != nil {
 		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%s", buildErr.Error())})
+		render.Respond(w, r, maelstrom.Status{Message: buildErr.Error()})
 	}
 
 	clientSet, cfgErr := kubernetes.NewForConfig(cfg)
