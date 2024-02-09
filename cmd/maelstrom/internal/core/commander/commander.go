@@ -3,7 +3,6 @@ package commander
 import (
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer"
@@ -28,19 +27,21 @@ func (c *Commander) Stop() {
 	close(c.interrupt)
 }
 
-func (c *Commander) Start(host string, workers int) {
+func (c *Commander) Start(host string, jobs, workers, cbuf, rbuf int) {
 	c.interrupt = make(chan struct{})
 
-	work := c.consumer.Start(c.interrupt)
-	load := c.processor.Process(c.interrupt, work, host)
+	for j := 0; j < jobs; j++ {
+		work := c.consumer.Start(c.interrupt, cbuf)
+		load := c.processor.Process(c.interrupt, work, host, cbuf)
 
-	results := make([]<-chan result, workers)
-	for i := 0; i < workers; i++ {
-		results[i] = c.vortexer(c.interrupt, load)
+		results := make([]<-chan result, workers)
+		for w := 0; w < workers; w++ {
+			results[w] = c.vortexer(c.interrupt, load, rbuf)
+		}
+
+		merged := merge(c.interrupt, results...)
+		c.analytics(c.interrupt, merged)
 	}
-
-	merged := merge(c.interrupt, results...)
-	c.analytics(c.interrupt, merged)
 }
 
 func merge(done chan struct{}, channels ...<-chan result) chan result {
@@ -79,19 +80,10 @@ func (c *Commander) analytics(done chan struct{}, results chan result) {
 			case res := <-results:
 				if res.response != nil {
 					c.metrics.Response(res.response.StatusCode)
-				} else {
-					c.metrics.Response(410)
 				}
 			}
 		}
 	}()
-}
-
-func deriveStatusCode(resp *http.Response) int {
-	if resp == nil {
-		return 500
-	}
-	return resp.StatusCode
 }
 
 // Leave returns the attempted raft removal of the node
@@ -109,8 +101,8 @@ type result struct {
 	response *http.Response
 }
 
-func (c *Commander) vortexer(done chan struct{}, work chan *http.Request) chan result {
-	ch := make(chan result, 1_000_000)
+func (c *Commander) vortexer(done chan struct{}, work chan *http.Request, buffer int) chan result {
+	ch := make(chan result, buffer)
 	go func() {
 		defer close(ch)
 		for {
@@ -123,19 +115,19 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request) chan r
 					c.logger.Log(logging.ErrorLevel, "nil request")
 					continue
 				}
-				go func() {
-					c.logger.Log(logging.DebugLevel, "sending HTTP request")
-					c.metrics.Requested()
-					response, err := c.client.Do(request)
-					time.Sleep(1 * time.Millisecond)
-					if err != nil {
-						log.Error().Err(err).Send()
-					}
-					ch <- result{
-						err:      err,
-						response: response,
-					}
-				}()
+
+				c.logger.Log(logging.DebugLevel, "sending HTTP request")
+				c.metrics.Requested()
+
+				response, err := c.client.Do(request)
+				if err != nil {
+					log.Error().Err(err).Send()
+				}
+
+				ch <- result{
+					err:      err,
+					response: response,
+				}
 			}
 		}
 	}()

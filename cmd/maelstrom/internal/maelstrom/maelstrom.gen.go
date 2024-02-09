@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.
@@ -19,14 +20,17 @@ type ServerInterface interface {
 	// (GET /nodes)
 	Nodes(w http.ResponseWriter, r *http.Request)
 
-	// (POST /scale)
-	Scale(w http.ResponseWriter, r *http.Request)
+	// (GET /nodes/{id})
+	FindNodeByID(w http.ResponseWriter, r *http.Request, id string)
 
-	// (POST /start)
-	Start(w http.ResponseWriter, r *http.Request)
+	// (POST /replicas)
+	Replicas(w http.ResponseWriter, r *http.Request)
 
-	// (POST /stop)
+	// (DELETE /vortex)
 	Stop(w http.ResponseWriter, r *http.Request)
+
+	// (POST /vortex)
+	Vortex(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -43,18 +47,23 @@ func (_ Unimplemented) Nodes(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// (POST /scale)
-func (_ Unimplemented) Scale(w http.ResponseWriter, r *http.Request) {
+// (GET /nodes/{id})
+func (_ Unimplemented) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// (POST /start)
-func (_ Unimplemented) Start(w http.ResponseWriter, r *http.Request) {
+// (POST /replicas)
+func (_ Unimplemented) Replicas(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// (POST /stop)
+// (DELETE /vortex)
 func (_ Unimplemented) Stop(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /vortex)
+func (_ Unimplemented) Vortex(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -97,12 +106,23 @@ func (siw *ServerInterfaceWrapper) Nodes(w http.ResponseWriter, r *http.Request)
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// Scale operation middleware
-func (siw *ServerInterfaceWrapper) Scale(w http.ResponseWriter, r *http.Request) {
+// FindNodeByID operation middleware
+func (siw *ServerInterfaceWrapper) FindNodeByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, chi.URLParam(r, "id"), &id)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Scale(w, r)
+		siw.Handler.FindNodeByID(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -112,12 +132,12 @@ func (siw *ServerInterfaceWrapper) Scale(w http.ResponseWriter, r *http.Request)
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// Start operation middleware
-func (siw *ServerInterfaceWrapper) Start(w http.ResponseWriter, r *http.Request) {
+// Replicas operation middleware
+func (siw *ServerInterfaceWrapper) Replicas(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Start(w, r)
+		siw.Handler.Replicas(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -133,6 +153,21 @@ func (siw *ServerInterfaceWrapper) Stop(w http.ResponseWriter, r *http.Request) 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Stop(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// Vortex operation middleware
+func (siw *ServerInterfaceWrapper) Vortex(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Vortex(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -262,13 +297,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/nodes", wrapper.Nodes)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/scale", wrapper.Scale)
+		r.Get(options.BaseURL+"/nodes/{id}", wrapper.FindNodeByID)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/start", wrapper.Start)
+		r.Post(options.BaseURL+"/replicas", wrapper.Replicas)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/stop", wrapper.Stop)
+		r.Delete(options.BaseURL+"/vortex", wrapper.Stop)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/vortex", wrapper.Vortex)
 	})
 
 	return r

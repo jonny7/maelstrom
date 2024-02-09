@@ -18,8 +18,8 @@ func NewProcessor(logger logging.Logger, metrics metrics.Metrics) RequestProcess
 	return RequestProcessor{logger: logger, metrics: metrics}
 }
 
-func (r RequestProcessor) Process(done chan struct{}, work <-chan requester.Event, host string) chan *http.Request {
-	ch := make(chan *http.Request)
+func (r RequestProcessor) Process(done chan struct{}, work <-chan requester.Event, host string, buffer int) chan *http.Request {
+	ch := make(chan *http.Request, buffer)
 	go func() {
 		defer close(ch)
 		for {

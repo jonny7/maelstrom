@@ -52,15 +52,15 @@ func (mr *MockConsumerMockRecorder) Close() *gomock.Call {
 }
 
 // Start mocks base method.
-func (m *MockConsumer) Start(arg0 <-chan struct{}) chan requester.Event {
+func (m *MockConsumer) Start(done <-chan struct{}, buffer int) chan requester.Event {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Start", arg0)
+	ret := m.ctrl.Call(m, "Start", done, buffer)
 	ret0, _ := ret[0].(chan requester.Event)
 	return ret0
 }
 
 // Start indicates an expected call of Start.
-func (mr *MockConsumerMockRecorder) Start(arg0 any) *gomock.Call {
+func (mr *MockConsumerMockRecorder) Start(done, buffer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockConsumer)(nil).Start), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockConsumer)(nil).Start), done, buffer)
 }

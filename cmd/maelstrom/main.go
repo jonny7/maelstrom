@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
@@ -56,7 +57,7 @@ func main() {
 
 	p := processor.NewProcessor(proc)
 
-	h := sender.NewSender(&http.Client{})
+	h := sender.NewSender(&http.Client{Timeout: 1500 * time.Millisecond})
 
 	app := service.NewApplication(client, p, h, logger, m)
 

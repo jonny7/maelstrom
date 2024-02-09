@@ -10,5 +10,5 @@ import (
 
 // Processor deserializes and converts events to http requests
 type Processor interface {
-	Process(done chan struct{}, work <-chan requester.Event, host string) chan *http.Request
+	Process(done chan struct{}, work <-chan requester.Event, host string, buffer int) chan *http.Request
 }
