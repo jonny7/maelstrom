@@ -27,6 +27,12 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	logger, err := logging.NewLogger(logging.InfoLevel, 1, os.Stdout, "service", "Maelstrom Application")
 	if err != nil {
 		log.Fatal(err)
@@ -37,7 +43,7 @@ func main() {
 
 	go func() {
 		// @todo move this
-		http.Handle("/metrics", promhttp.Handler())
+		http.Handle("/", promhttp.Handler())
 		_ = http.ListenAndServe(":2112", nil)
 	}()
 
@@ -85,10 +91,10 @@ func main() {
 		case msg := <-sig:
 			logger.Log(logging.InfoLevel, fmt.Sprintf("shutting down from signal: %v", msg))
 			close(done)
-			return
+			return nil
 		case err = <-errs:
 			logger.LogWithError(logging.ErrorLevel, "returning from ListenAndServe", err)
-			return
+			return err
 		}
 	}
 }
