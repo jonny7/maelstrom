@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"sort"
+	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -15,12 +19,17 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
 	"github.com/jonny7/maelstrom/ui/components"
 	"github.com/jonny7/maelstrom/ui/views"
+	"github.com/prometheus/client_golang/api"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	promcfg "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 )
 
 type UI struct {
-	app    application.App
-	cfg    config.Config
-	logger logging.Logger
+	app     application.App
+	cfg     config.Config
+	logger  logging.Logger
+	metrics v1.API
 }
 
 func (u UI) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
@@ -54,11 +63,28 @@ func New(app application.App) UI {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	cfg, err := config.New()
 	if err != nil {
 		log.Fatal(err)
 	}
-	srv := UI{app: app, cfg: *cfg}
+
+	// @todo make configurable
+	c, err := api.NewClient(api.Config{
+		Address:      "http://localhost:9090",
+		RoundTripper: promcfg.NewBasicAuthRoundTripper("admin", "admin", "", "", api.DefaultRoundTripper),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	v1api := v1.NewAPI(c)
+
+	srv := UI{
+		app:     app,
+		cfg:     *cfg,
+		metrics: v1api,
+	}
 	srv.logger = logger
 	return srv
 }
@@ -70,10 +96,13 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 	// generate routes
 	u.setupRoutes(mux)
 
-	srv := http.Server{Addr: u.cfg.HttpAddress(), Handler: mountRouter(mux)}
+	srv := http.Server{
+		Addr:    net.JoinHostPort(u.cfg.Host, strconv.Itoa(u.cfg.Port)),
+		Handler: mountRouter(mux),
+	}
 
 	go func() {
-		u.logger.Log(logging.InfoLevel, fmt.Sprintf("starting UI on: %s", u.cfg.HttpAddress()))
+		u.logger.Log(logging.InfoLevel, fmt.Sprintf("starting UI on: %s", net.JoinHostPort(u.cfg.Host, strconv.Itoa(u.cfg.Port))))
 		errs <- srv.ListenAndServe()
 	}()
 	go func() {
@@ -89,6 +118,30 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 func (u UI) setupRoutes(router *chi.Mux) {
 	router.Get("/", u.Index)
 	router.Get("/nodes", u.Nodes)
+	router.Get("/paginate", u.Paginate)
+}
+
+func (u UI) vortex() map[int64]model.SampleValue {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	tr := v1.Range{
+		Start: time.Now().Add(-5 * time.Minute),
+		End:   time.Now(),
+		Step:  1 * time.Second,
+	}
+	m, warn, e := u.metrics.QueryRange(ctx, "sum(irate(maelstrom_requested{}[5m]))", tr)
+	if e != nil {
+		// @todo
+		log.Println(warn)
+		log.Fatal(e)
+	}
+	mapData := make(map[int64]model.SampleValue)
+
+	for _, val := range m.(model.Matrix)[0].Values {
+		mapData[val.Timestamp.Unix()] = val.Value
+	}
+	return mapData
 }
 
 func (u UI) Index(w http.ResponseWriter, req *http.Request) {
@@ -97,8 +150,17 @@ func (u UI) Index(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (u UI) Paginate(w http.ResponseWriter, req *http.Request) {
+	if err := components.Pagination(len(u.app.Agent.Members())).Render(req.Context(), w); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
 func (u UI) Nodes(w http.ResponseWriter, req *http.Request) {
 	nodes := dto.MemberDTO(u.app.Agent.Members())
+	sort.Slice(nodes, func(i, j int) bool {
+		return nodes[i].Name < nodes[j].Name
+	})
 	if err := components.Nodes(nodes).Render(req.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
