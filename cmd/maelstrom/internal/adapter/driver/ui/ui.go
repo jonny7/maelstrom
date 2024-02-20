@@ -9,7 +9,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -25,7 +24,6 @@ import (
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	promcfg "github.com/prometheus/common/config"
-	"github.com/prometheus/common/model"
 )
 
 type UI struct {
@@ -172,25 +170,25 @@ func (u UI) Health(w http.ResponseWriter, r *http.Request) {
 	panic("implement me")
 }
 
-func (u UI) vortex() map[int64]model.SampleValue {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	tr := v1.Range{
-		Start: time.Now().Add(-5 * time.Minute),
-		End:   time.Now(),
-		Step:  1 * time.Second,
-	}
-	m, warn, e := u.metrics.QueryRange(ctx, "sum(irate(maelstrom_requested{}[5m]))", tr)
-	if e != nil {
-		// @todo
-		log.Println(warn)
-		log.Fatal(e)
-	}
-	mapData := make(map[int64]model.SampleValue)
-
-	for _, val := range m.(model.Matrix)[0].Values {
-		mapData[val.Timestamp.Unix()] = val.Value
-	}
-	return mapData
-}
+//func (u UI) vortex() map[int64]model.SampleValue {
+//
+//	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+//	defer cancel()
+//	tr := v1.Range{
+//		Start: time.Now().Add(-5 * time.Minute),
+//		End:   time.Now(),
+//		Step:  1 * time.Second,
+//	}
+//	m, warn, e := u.metrics.QueryRange(ctx, "sum(irate(maelstrom_requested{}[5m]))", tr)
+//	if e != nil {
+//		// @todo
+//		log.Println(warn)
+//		log.Fatal(e)
+//	}
+//	mapData := make(map[int64]model.SampleValue)
+//
+//	for _, val := range m.(model.Matrix)[0].Values {
+//		mapData[val.Timestamp.Unix()] = val.Value
+//	}
+//	return mapData
+//}

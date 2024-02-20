@@ -30,7 +30,7 @@ func New(namespace string) (K8s, error) {
 
 	clientSet, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("error creating k8 clientset: %w", clientSet)
+		return nil, fmt.Errorf("error creating k8 clientset: %w", err)
 	}
 	return &k8s{
 		client:    clientSet,
