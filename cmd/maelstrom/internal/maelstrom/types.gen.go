@@ -46,8 +46,8 @@ type Vortex struct {
 	Workers int `json:"workers"`
 }
 
-// ReplicasJSONRequestBody defines body for Replicas for application/json ContentType.
-type ReplicasJSONRequestBody = Replicas
+// ScaleReplicasJSONRequestBody defines body for ScaleReplicas for application/json ContentType.
+type ScaleReplicasJSONRequestBody = Replicas
 
 // StopJSONRequestBody defines body for Stop for application/json ContentType.
 type StopJSONRequestBody = Status
