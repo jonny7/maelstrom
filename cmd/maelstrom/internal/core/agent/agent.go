@@ -35,6 +35,12 @@ type Agent struct {
 	agent *agent
 }
 
+type Service interface {
+	Members() []serf.Member
+	Start(host string, jobs, workers int, cbuf, rbuf int)
+	Stop()
+}
+
 func (a Agent) Start(host string, jobs, workers int, cbuf, rbuf int) {
 	log.Debug().Msg("starting consumer and processor")
 	a.agent.commander.Start(host, jobs, workers, cbuf, rbuf)
@@ -43,12 +49,6 @@ func (a Agent) Start(host string, jobs, workers int, cbuf, rbuf int) {
 func (a Agent) Stop() {
 	log.Debug().Msg("stop load test was triggered by the user")
 	a.agent.commander.Stop()
-}
-
-type Service interface {
-	Members() []serf.Member
-	Start(host string, jobs, workers int, cbuf, rbuf int)
-	Stop()
 }
 
 func (a Agent) Members() []serf.Member {

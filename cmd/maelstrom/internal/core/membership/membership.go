@@ -3,6 +3,7 @@ package membership
 import (
 	"log"
 	"net"
+	"time"
 
 	"github.com/hashicorp/serf/serf"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
@@ -39,6 +40,9 @@ func (m *Membership) newSerf() error {
 	}
 	// create sane serf defaults to start with
 	config := serf.DefaultConfig()
+	// adjust probes
+	config.ReconnectTimeout = 5 * time.Minute
+	config.TombstoneTimeout = 10 * time.Minute
 	config.Init()
 	// apply member list updates from agent config
 	config.MemberlistConfig.BindAddr = addr.IP.String()

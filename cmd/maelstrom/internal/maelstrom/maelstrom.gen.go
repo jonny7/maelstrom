@@ -23,8 +23,11 @@ type ServerInterface interface {
 	// (GET /nodes/{id})
 	FindNodeByID(w http.ResponseWriter, r *http.Request, id string)
 
-	// (POST /replicas)
+	// (GET /replicas)
 	Replicas(w http.ResponseWriter, r *http.Request)
+
+	// (PUT /replicas)
+	ScaleReplicas(w http.ResponseWriter, r *http.Request)
 
 	// (DELETE /vortex)
 	Stop(w http.ResponseWriter, r *http.Request)
@@ -52,8 +55,13 @@ func (_ Unimplemented) FindNodeByID(w http.ResponseWriter, r *http.Request, id s
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// (POST /replicas)
+// (GET /replicas)
 func (_ Unimplemented) Replicas(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PUT /replicas)
+func (_ Unimplemented) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -138,6 +146,21 @@ func (siw *ServerInterfaceWrapper) Replicas(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Replicas(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// ScaleReplicas operation middleware
+func (siw *ServerInterfaceWrapper) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScaleReplicas(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -300,7 +323,10 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/nodes/{id}", wrapper.FindNodeByID)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/replicas", wrapper.Replicas)
+		r.Get(options.BaseURL+"/replicas", wrapper.Replicas)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/replicas", wrapper.ScaleReplicas)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/vortex", wrapper.Stop)
