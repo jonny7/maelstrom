@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -17,15 +19,17 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Server struct {
 	app    application.App
 	logger logging.Logger
 	cfg    config.Config
+}
+
+func (s Server) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (s Server) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
@@ -109,10 +113,10 @@ func (s Server) Run(done chan struct{}, errs chan error, mountRouter func(router
 	base := chi.NewRouter()
 	base.Mount("/api", mountRouter(mux))
 
-	srv := http.Server{Addr: s.cfg.HttpAddress(), Handler: base}
+	srv := http.Server{Addr: net.JoinHostPort(s.cfg.Host, strconv.Itoa(s.cfg.Port)), Handler: base}
 
 	go func() {
-		s.logger.Log(logging.InfoLevel, fmt.Sprintf("starting API on %s", s.cfg.HttpAddress()))
+		s.logger.Log(logging.InfoLevel, fmt.Sprintf("starting API on %s", net.JoinHostPort(s.cfg.Host, strconv.Itoa(s.cfg.Port))))
 		errs <- srv.ListenAndServe()
 	}()
 	go func() {
@@ -141,36 +145,9 @@ func (s Server) Replicas(w http.ResponseWriter, r *http.Request) {
 		render.Respond(w, r, maelstrom.Status{Message: "unable to decode body"})
 		return
 	}
-
-	cfg, buildErr := clientcmd.BuildConfigFromFlags("", "")
-	if buildErr != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Status{Message: buildErr.Error()})
-	}
-
-	clientSet, cfgErr := kubernetes.NewForConfig(cfg)
-	if cfgErr != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%e", cfgErr)})
-	}
-
-	cur, getErr := clientSet.AppsV1().
-		StatefulSets(s.cfg.K8s.Namespace).
-		GetScale(context.Background(), "maelstrom", metav1.GetOptions{})
-	if getErr != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%e", cfgErr)})
-	}
-
-	sc := *cur
-	sc.Spec.Replicas = int32(newScale.Replicas)
-
-	_, err := clientSet.AppsV1().
-		StatefulSets(s.cfg.K8s.Namespace).
-		UpdateScale(context.Background(), "maelstrom", &sc, metav1.UpdateOptions{})
-	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.Respond(w, r, maelstrom.Status{Message: fmt.Sprintf("%e", err)})
+	if status, err := s.app.K8s.Scale(newScale.Replicas); err != nil {
+		render.Status(r, status)
+		render.Respond(w, r, maelstrom.Status{Message: err.Error()})
 	}
 
 	render.Status(r, http.StatusAccepted)
