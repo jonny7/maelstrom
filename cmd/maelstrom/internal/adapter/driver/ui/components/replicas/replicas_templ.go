@@ -25,7 +25,7 @@ func Replicas(replicas int) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-put=\"/replicas\" hx-target=\"this\" hx-swap=\"outerHTML\" class=\"pl-4 w-2/12 mt-5\"><div class=\"relative mt-2 rounded-md shadow-sm\"><label for=\"replicas\" class=\"block text-lg font-semibold font-medium leading-6 text-gray-900\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-put=\"/replicas\" hx-target=\"this\" hx-swap=\"outerHTML\"><div class=\"relative mt-2 rounded-md shadow-sm\"><label for=\"replicas\" class=\"block text-lg font-semibold font-medium leading-6 text-gray-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -75,7 +75,7 @@ func ReplicasWithError(replicas int, err string) templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-put=\"/replicas\" hx-target=\"this\" hx-swap=\"outerHTML\" class=\"pl-4 w-2/12 mt-5\"><div class=\"relative mt-2 rounded-md shadow-sm\"><label for=\"replicas\" class=\"block text-lg font-semibold font-medium leading-6 text-gray-900\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-put=\"/replicas\" hx-target=\"this\" hx-swap=\"outerHTML\"><div class=\"relative mt-2 rounded-md shadow-sm\"><label for=\"replicas\" class=\"block text-lg font-semibold font-medium leading-6 text-gray-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

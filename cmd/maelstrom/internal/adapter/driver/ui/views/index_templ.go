@@ -140,110 +140,20 @@ func Index() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><div class=\"bg-gray-100 mt-4 mx-4 p-4 rounded-lg\"><section class=\"bg-gray-100\"><div class=\"max-w-5xl px-4 mx-auto sm:px-6 lg:px-8\"><div class=\"max-w-2xl mx-auto text-center\"></div><div class=\"grid grid-cols-5 gap-3 text-center md:grid-cols-5\"><div><h3 class=\"font-bold text-4xl\"><span class=\"text-indigo-600\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><div hx-get=\"/vortexes\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load, every 10s\"></div><h2 class=\"pl-4 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Var15 := `c5ac2c09`
+		templ_7745c5c3_Var15 := `Nodes `
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span></h3><p class=\"mt-4 font-medium text-gray-900\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div hx-get=\"/replicas\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load\" class=\"pl-4 w-2/12 mt-5\"></div><div class=\"bg-gray-100 mt-4 mx-4 p-4 rounded-lg\"><div class=\"grid grid-cols-4 gap-4 mx-4\" hx-get=\"/nodes\" hx-trigger=\"load, every 2s\"></div></div><div class=\"flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6\" hx-get=\"/paginate\" hx-trigger=\"load, every 2s\" hx-swap=\"innerHTML\"></div></body><script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Var16 := `Run ID`
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div><div><h3 class=\"font-bold text-4xl\"><span class=\"text-indigo-600\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var17 := `125m`
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span></h3><p class=\"mt-4 font-medium text-gray-900\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var18 := `Run Time`
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div><div><h3 class=\"font-bold text-4xl\"><span class=\"text-indigo-600\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var19 := `10`
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span></h3><p class=\"mt-4 font-medium text-gray-900\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var20 := `Jobs`
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div><div><h3 class=\"font-bold text-4xl\"><span class=\"text-indigo-600\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var21 := `36`
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var21)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span></h3><p class=\"mt-4 font-medium text-gray-900\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var22 := `Workers`
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div><div><h3 class=\"font-bold text-4xl\"><span class=\"text-indigo-600\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var23 := `domain.com`
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span></h3><p class=\"mt-4 font-medium text-gray-900\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var24 := `Host`
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var24)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div></div></div></section></div><h2 class=\"pl-4 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var25 := `Nodes `
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div hx-get=\"/replicas\" hx-target=\"this\" hx-swap=\"outerHTML\" hx-trigger=\"load\" class=\"pl-4 w-2/12 mt-5\"></div><div class=\"bg-gray-100 mt-4 mx-4 p-4 rounded-lg\"><div class=\"grid grid-cols-4 gap-4 mx-4\" hx-get=\"/nodes\" hx-trigger=\"load, every 2s\"></div></div><div class=\"flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6\" hx-get=\"/paginate\" hx-trigger=\"load, every 2s\" hx-swap=\"innerHTML\"></div></body><script>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Var26 := `
+		templ_7745c5c3_Var16 := `
     const ctx = document.getElementById('myChart');
 
     const config = {
@@ -294,7 +204,7 @@ func Index() templ.Component {
     c.data.datasets[0].data[7] = {x: "2020-02-15 18:37:44", y: 1225};
     c.update();
 `
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var26)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,0 +1,67 @@
+package run
+
+import "github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
+
+templ Run(runs []dto.Run) {
+<table class="table-auto">
+	<thead>
+	<tr>
+		<th>ID</th>
+		<th>URL</th>
+		<th>Running Time</th>
+		<th>Jobs</th>
+		<th>Workers</th>
+	</tr>
+	</thead>
+	<tbody>
+	for _, run := range runs {
+	<tr>
+		<td>{ run.ID }</td>
+		<td>{ run.Host }</td>
+		<td>{ run.RunningTime }</td>
+		<td>{ run.Jobs }</td>
+		<td>{ run.Workers }</td>
+	</tr>
+	}
+	</tbody>
+</table>
+<!--	<div class="bg-gray-100 mt-4 mx-4 p-4 rounded-lg">-->
+<!--		<section class="bg-gray-100">-->
+<!--			<div class="max-w-5xl px-4 mx-auto sm:px-6 lg:px-8">-->
+<!--				<div class="max-w-2xl mx-auto text-center"></div>-->
+<!--				<div class="grid grid-cols-5 gap-3 text-center md:grid-cols-5">-->
+<!--					<div>-->
+<!--						<h3 class="font-bold text-4xl">-->
+<!--							<span class="text-indigo-600">c5ac2c09</span>-->
+<!--						</h3>-->
+<!--						<p class="mt-4 font-medium text-gray-900">Run ID</p>-->
+<!--					</div>-->
+<!--					<div>-->
+<!--						<h3 class="font-bold text-4xl">-->
+<!--							<span class="text-indigo-600">125m</span>-->
+<!--						</h3>-->
+<!--						<p class="mt-4 font-medium text-gray-900">Run Time</p>-->
+<!--					</div>-->
+<!--					<div>-->
+<!--						<h3 class="font-bold text-4xl">-->
+<!--							<span class="text-indigo-600">10</span>-->
+<!--						</h3>-->
+<!--						<p class="mt-4 font-medium text-gray-900">Jobs</p>-->
+<!--					</div>-->
+<!--					<div>-->
+<!--						<h3 class="font-bold text-4xl">-->
+<!--							<span class="text-indigo-600">36</span>-->
+<!--						</h3>-->
+<!--						<p class="mt-4 font-medium text-gray-900">Workers</p>-->
+<!--					</div>-->
+<!--					<div>-->
+<!--						<h3 class="font-bold text-4xl">-->
+<!--							<span class="text-indigo-600">domain.com</span>-->
+<!--						</h3>-->
+<!--						<p class="mt-4 font-medium text-gray-900">Host</p>-->
+<!--					</div>-->
+<!--				</div>-->
+<!--			</div>-->
+<!--		</section>-->
+<!--	</div>-->
+}
