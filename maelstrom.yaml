@@ -101,8 +101,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/Status'
   /vortex:
+    get:
+      operationId: Vortexes
+      responses:
+        '200':
+          description: |-
+            get available test runs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vortex'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
     post:
-      operationId: vortex
+      operationId: startVortex
       requestBody:
         description: |-
          start the load test
@@ -126,7 +144,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Status'
     delete:
-      operationId: stop
+      operationId: endVortex
       requestBody:
         description: stop the load test
         required: true
@@ -166,13 +184,13 @@ components:
           type: integer
     Vortex:
       type: object
-      required: [host, jobs, workers, consumer_buffer, result_buffer]
+      required: [jobs, workers, consumer_buffer, result_buffer]
       properties:
         id:
           description: uuid of created load test
           type: string
         host:
-          description: host / url to hit
+          description: host / url to hit, if this is null it is being dynamically generated through the processor
           type: string
         jobs:
           description: number of goroutines consuming / processing. eg 2 jobs will create two consumers + processors
@@ -191,6 +209,12 @@ components:
         result_buffer:
           description: |-
             same as above, but for the vortexer and result processing.
+          type: integer
+        start_time:
+          description: the time the test run started
+          type: integer
+        end_time:
+          description: the time the test run ended
           type: integer
     Status:
       type: object

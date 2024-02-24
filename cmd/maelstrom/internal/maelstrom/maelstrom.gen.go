@@ -30,10 +30,13 @@ type ServerInterface interface {
 	ScaleReplicas(w http.ResponseWriter, r *http.Request)
 
 	// (DELETE /vortex)
-	Stop(w http.ResponseWriter, r *http.Request)
+	EndVortex(w http.ResponseWriter, r *http.Request)
+
+	// (GET /vortex)
+	Vortexes(w http.ResponseWriter, r *http.Request)
 
 	// (POST /vortex)
-	Vortex(w http.ResponseWriter, r *http.Request)
+	StartVortex(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -66,12 +69,17 @@ func (_ Unimplemented) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 }
 
 // (DELETE /vortex)
-func (_ Unimplemented) Stop(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) EndVortex(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /vortex)
+func (_ Unimplemented) Vortexes(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // (POST /vortex)
-func (_ Unimplemented) Vortex(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) StartVortex(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -170,12 +178,12 @@ func (siw *ServerInterfaceWrapper) ScaleReplicas(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// Stop operation middleware
-func (siw *ServerInterfaceWrapper) Stop(w http.ResponseWriter, r *http.Request) {
+// EndVortex operation middleware
+func (siw *ServerInterfaceWrapper) EndVortex(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Stop(w, r)
+		siw.Handler.EndVortex(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -185,12 +193,27 @@ func (siw *ServerInterfaceWrapper) Stop(w http.ResponseWriter, r *http.Request) 
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// Vortex operation middleware
-func (siw *ServerInterfaceWrapper) Vortex(w http.ResponseWriter, r *http.Request) {
+// Vortexes operation middleware
+func (siw *ServerInterfaceWrapper) Vortexes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Vortex(w, r)
+		siw.Handler.Vortexes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// StartVortex operation middleware
+func (siw *ServerInterfaceWrapper) StartVortex(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StartVortex(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -329,10 +352,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/replicas", wrapper.ScaleReplicas)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/vortex", wrapper.Stop)
+		r.Delete(options.BaseURL+"/vortex", wrapper.EndVortex)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/vortex", wrapper.Vortex)
+		r.Get(options.BaseURL+"/vortex", wrapper.Vortexes)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/vortex", wrapper.StartVortex)
 	})
 
 	return r
