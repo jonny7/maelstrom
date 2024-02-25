@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/goccy/go-json"
+	"github.com/google/uuid"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
@@ -27,6 +28,11 @@ type Server struct {
 	cfg    config.Config
 }
 
+func (s Server) Vortexes(w http.ResponseWriter, r *http.Request) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (s Server) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 	//TODO implement me
 	panic("implement me")
@@ -37,15 +43,21 @@ func (s Server) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) 
 	panic("implement me")
 }
 
-func (s Server) Stop(w http.ResponseWriter, r *http.Request) {
-	s.app.Agent.Stop()
+func (s Server) EndVortex(w http.ResponseWriter, r *http.Request, id string) {
+	validatedUUID, err := uuid.Parse(id)
+	if err != nil {
+		w.WriteHeader(400)
+		// @todo
+		return
+	}
+	s.app.Agent.EndVortex(validatedUUID)
 	render.Respond(w, r, maelstrom.Status{
 		Message: "success",
 		Status:  http.StatusOK,
 	})
 }
 
-func (s Server) Vortex(w http.ResponseWriter, r *http.Request) {
+func (s Server) StartVortex(w http.ResponseWriter, r *http.Request) {
 	var vortex maelstrom.Vortex
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -65,11 +77,11 @@ func (s Server) Vortex(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	if _, err = url.Parse(vortex.Host); err != nil {
+	if _, err = url.Parse(*vortex.Host); err != nil {
 		render.Status(r, 400)
-		render.Respond(w, r, fmt.Sprintf("the provided host was unable to be parsed: %s", vortex.Host))
+		render.Respond(w, r, fmt.Sprintf("the provided host was unable to be parsed: %s", *vortex.Host))
 	}
-	s.app.Agent.Start(vortex.Host, vortex.Jobs, vortex.Workers, vortex.ConsumerBuffer, vortex.ResultBuffer)
+	s.app.Agent.StartVortex(*vortex.Host, vortex.Jobs, vortex.Workers, vortex.ConsumerBuffer, vortex.ResultBuffer)
 	render.Respond(w, r, maelstrom.Status{
 		Message: "success",
 		Status:  http.StatusOK,
@@ -100,7 +112,8 @@ func (s Server) setupRoutes(router *chi.Mux) {
 	router.Get("/healthz", s.Health)
 	router.Get("/nodes", s.Nodes)
 	router.Post("/replicas", s.Replicas)
-	router.Post("/vortex", s.Vortex)
+	router.Post("/vortex", s.StartVortex)
+	//router.Delete("/delete", s.EndVortex)
 }
 
 func (s Server) Run(done chan struct{}, errs chan error, mountRouter func(router chi.Router) http.Handler) {
@@ -134,7 +147,7 @@ func (s Server) Health(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s Server) Nodes(w http.ResponseWriter, r *http.Request) {
-	members := s.app.Agent.Members()
+	members := s.app.Agent.Membership()
 	render.Respond(w, r, members)
 }
 

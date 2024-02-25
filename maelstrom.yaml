@@ -143,19 +143,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
+  /vortex/{id}:
     delete:
       operationId: endVortex
+      parameters:
+        - name: id
+          in: path
+          description: ID of load test to stop
+          required: true
+          schema:
+            type: string
       requestBody:
-        description: stop the load test
+        description: stop the specified load test
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Status'
       responses:
-        '200':
+        '202':
           description: |-
-            stop the load test
+            stop the load test by ID
         default:
           description: error trying to start load test
           content:

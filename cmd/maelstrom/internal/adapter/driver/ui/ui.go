@@ -12,11 +12,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/dto"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/nodes"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/pagination"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/replicas"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/vortex"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/views"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
@@ -92,10 +94,14 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 
 func (u UI) setupRoutes(router *chi.Mux) {
 	router.Get("/", u.Index)
-	router.Get("/nodes", u.Nodes)
-	router.Get("/paginate", u.Paginate)
-	router.Get("/replicas", u.Replicas)
-	router.Put("/replicas", u.ScaleReplicas)
+	router.Get("/vortexes", u.VortexForm)
+	//router.Get("/nodes", u.Nodes)
+	//router.Get("/paginate", u.Paginate)
+	//router.Get("/replicas", u.Replicas)
+	//router.Put("/replicas", u.ScaleReplicas)
+	//router.Get("/vortexes", u.Vortexes)
+	//router.Post("/vortexes", u.StartVortex)
+	//router.Delete("/vortexes", u.EndVortex)
 }
 
 func (u UI) Index(w http.ResponseWriter, req *http.Request) {
@@ -105,7 +111,7 @@ func (u UI) Index(w http.ResponseWriter, req *http.Request) {
 }
 
 func (u UI) Nodes(w http.ResponseWriter, req *http.Request) {
-	members := dto.MemberDTO(u.app.Agent.Members())
+	members := u.app.Agent.Membership()
 	sort.Slice(members, func(i, j int) bool {
 		return members[i].Name < members[j].Name
 	})
@@ -114,13 +120,13 @@ func (u UI) Nodes(w http.ResponseWriter, req *http.Request) {
 	}
 }
 func (u UI) Paginate(w http.ResponseWriter, req *http.Request) {
-	if err := pagination.Pagination(len(u.app.Agent.Members())).Render(req.Context(), w); err != nil {
+	if err := pagination.Pagination(len(u.app.Agent.Membership())).Render(req.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
 func (u UI) Replicas(w http.ResponseWriter, r *http.Request) {
-	members := u.app.Agent.Members()
+	members := u.app.Agent.Membership()
 	if err := replicas.Replicas(len(members)).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -129,7 +135,7 @@ func (u UI) Replicas(w http.ResponseWriter, r *http.Request) {
 func (u UI) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 	v, err := strconv.Atoi(r.FormValue("replicas"))
 	if err != nil {
-		if re := replicas.ReplicasWithError(len(u.app.Agent.Members()), "unable to parse input").Render(r.Context(), w); re != nil {
+		if re := replicas.ReplicasWithError(len(u.app.Agent.Membership()), "unable to parse input").Render(r.Context(), w); re != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -138,7 +144,7 @@ func (u UI) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 	scale := maelstrom.Replicas{Replicas: v}
 	_, err = u.app.K8s.Scale(scale.Replicas)
 	if err != nil {
-		if re := replicas.ReplicasWithError(len(u.app.Agent.Members()), err.Error()).Render(r.Context(), w); re != nil {
+		if re := replicas.ReplicasWithError(len(u.app.Agent.Membership()), err.Error()).Render(r.Context(), w); re != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -154,20 +160,64 @@ func (u UI) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
 	panic("implement me")
 }
 
-func (u UI) Stop(w http.ResponseWriter, _ *http.Request) {
-	u.app.Agent.Stop()
-	w.WriteHeader(200)
+func (u UI) Vortexes(w http.ResponseWriter, req *http.Request) {
+	runs := u.app.Agent.Vortexes()
+	if err := vortex.Run(runs).Render(req.Context(), w); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
-func (u UI) Vortex(w http.ResponseWriter, _ *http.Request) {
-	// @todo
-	u.app.Agent.Start("url", 4, 1, 0, 0)
-	w.WriteHeader(200)
+func (u UI) StartVortex(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(400)
+		return
+	}
+
+	jobs, err := strconv.ParseInt(r.FormValue("jobs"), 10, 8)
+	if err != nil {
+		w.WriteHeader(400)
+		return
+	}
+	workers, err := strconv.ParseInt(r.FormValue("workers"), 10, 8)
+	if err != nil {
+		w.WriteHeader(400)
+		return
+	}
+	cbuf, err := strconv.ParseInt(r.FormValue("consumer_buffer"), 10, 8)
+	if err != nil {
+		w.WriteHeader(400)
+		return
+	}
+	rbuf, err := strconv.ParseInt(r.FormValue("result_buffer"), 10, 8)
+	if err != nil {
+		w.WriteHeader(400)
+		return
+	}
+
+	u.app.Agent.StartVortex(r.FormValue("url"), int(jobs), int(workers), int(cbuf), int(rbuf))
+	if e := vortex.Vortex().Render(r.Context(), w); e != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (u UI) EndVortex(w http.ResponseWriter, _ *http.Request, id string) {
+	validatedUUID, err := uuid.Parse(id)
+	if err != nil {
+		w.WriteHeader(400)
+		// @todo
+		return
+	}
+	u.app.Agent.EndVortex(validatedUUID)
+	w.WriteHeader(202)
 }
 
 func (u UI) Health(w http.ResponseWriter, r *http.Request) {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (u UI) VortexForm(writer http.ResponseWriter, request *http.Request) {
+
 }
 
 //func (u UI) vortex() map[int64]model.SampleValue {

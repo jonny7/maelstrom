@@ -8,11 +8,12 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/k8s"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
+	svc "github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent"
 )
 
 type App struct {
 	Logger logging.Logger
-	Agent  agent.Service
+	Agent  svc.Service
 	K8s    k8s.K8s
 }
 
@@ -31,7 +32,7 @@ func New(consumer consumer.Consumer, processor processor.Processor, client sende
 
 	return App{
 		Logger: logger,
-		Agent:  a,
+		Agent:  svc.NewAgentService(a),
 		K8s:    k, //k8s.NewFakeK8s(),
 	}
 }
