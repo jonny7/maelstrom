@@ -1,6 +1,7 @@
 package nodes
 
-import "github.com/jonny7/maelstrom/cmd/maelstrom/dto"
+import "github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
+import "fmt"
 
 templ status(status string) {
 	switch status {
@@ -16,40 +17,70 @@ templ status(status string) {
 }
 
 templ Nodes(nodes []dto.Member) {
-	for _, node := range nodes {
-		<ul>
-			<li class="col-span-1 bg-white rounded-lg shadow divide-y divide-gray-200">
-				<div class="w-full flex items-center justify-between p-6 space-x-6">
-					<div class="flex-1 truncate">
-						<div class="flex items-center space-x-3">
-							<h3 class="text-gray-900 text-sm font-medium truncate">{ node.Name }</h3>
-							@status(node.Status)
+	<div class="bg-gray-100 mt-4 mx-4 p-4 rounded-lg">
+		<div class="grid grid-cols-4 gap-4 mx-4">
+			for _, node := range nodes {
+				<ul>
+					<li class="col-span-1 bg-white rounded-lg shadow divide-y divide-gray-200">
+						<div class="w-full flex items-center justify-between p-6 space-x-6">
+							<div class="flex-1 truncate">
+								<div class="flex items-center space-x-3">
+									<h3 class="text-gray-900 text-sm font-medium truncate">{ node.Name }</h3>
+									@status(node.Status)
+								</div>
+								<p class="mt-1 text-gray-500 text-sm truncate">{ node.Addr }:{ node.Port }</p>
+								<span class="flex-shrink-0 inline-block px-2 py-0.5 text-white-200 text-xs font-medium bg-purple-300 rounded-full">{ node.Tags }</span>
+							</div>
 						</div>
-						<p class="mt-1 text-gray-500 text-sm truncate">{ node.Addr }:{ node.Port }</p>
-						<span class="flex-shrink-0 inline-block px-2 py-0.5 text-white-200 text-xs font-medium bg-purple-300 rounded-full">{ node.Tags }</span>
-					</div>
-				</div>
-				<div>
-					<div class="-mt-px flex divide-x divide-gray-200">
-						<div class="w-0 flex-1 flex">
-							<a href="#" class="relative -mr-px w-0 flex-1 inline-flex items-center justify-center py-4 text-sm text-white bg-blue-400 font-medium border border-transparent rounded-bl-lg">
-								<svg class="w-5 h-5 text-white-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"></path>
-								</svg>
-								<span class="ml-3">Update</span>
-							</a>
+						<div>
+							<div class="-mt-px flex divide-x divide-gray-200">
+								<div class="w-0 flex-1 flex">
+									<a href="#" class="relative -mr-px w-0 flex-1 inline-flex items-center justify-center py-4 text-sm text-white bg-blue-400 font-medium border border-transparent rounded-bl-lg">
+										<svg class="w-5 h-5 text-white-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"></path>
+										</svg>
+										<span class="ml-3">Update</span>
+									</a>
+								</div>
+								<div class="w-0 flex-1 flex">
+									<a href="#" class="relative -mr-px w-0 flex-1 inline-flex items-center justify-center py-4 text-sm text-white bg-red-400 font-medium border border-transparent rounded-br-lg">
+										<svg class="w-5 h-5 text-white-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"></path>
+										</svg>
+										<span class="ml-3">Terminate</span>
+									</a>
+								</div>
+							</div>
 						</div>
-						<div class="w-0 flex-1 flex">
-							<a href="#" class="relative -mr-px w-0 flex-1 inline-flex items-center justify-center py-4 text-sm text-white bg-red-400 font-medium border border-transparent rounded-br-lg">
-								<svg class="w-5 h-5 text-white-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"></path>
-								</svg>
-								<span class="ml-3">Terminate</span>
-							</a>
-						</div>
-					</div>
-				</div>
-			</li>
-		</ul>
-	}
+					</li>
+				</ul>
+			}
+		</div>
+	</div>
+	<div class="flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6">
+		<div class="flex flex-1 justify-between sm:hidden">
+			<a
+ 				href="#"
+ 				class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+			>Previous</a>
+			<a
+ 				href="#"
+ 				class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+			>Next</a>
+		</div>
+		<div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+			<div>
+				<p class="text-sm text-gray-700">
+					Showing
+					<span class="font-medium">1</span>
+					to
+					<span class="font-medium">{ fmt.Sprint(len(nodes)) }</span>
+					of
+					<span class="font-medium">{ fmt.Sprint(len(nodes)) }</span>
+					results
+				</p>
+			</div>
+			<div></div>
+		</div>
+	</div>
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	mocklogger "github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
 	mocksconsumer "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer/mocks"
 	mockprocessor "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor/mocks"
@@ -34,9 +35,14 @@ func TestNewCommander(t *testing.T) {
 func TestCommanderStop(t *testing.T) {
 	done := make(chan struct{})
 	cmdr := Commander{
-		interrupt: done,
+		interrupt: make(map[uuid.UUID]vortexWithInterupt),
 	}
-	cmdr.Stop()
+
+	u := uuid.New()
+	cmdr.interrupt[u] = vortexWithInterupt{
+		done: done,
+	}
+	cmdr.Stop(u)
 	if _, ok := <-done; ok {
 		t.Errorf("expected closed channel, but got: %v", done)
 	}

@@ -28,8 +28,11 @@ type Vortex struct {
 	// go faster. But you'd need to change these per workload and manage system memory and contention
 	ConsumerBuffer int `json:"consumer_buffer"`
 
-	// Host host / url to hit
-	Host string `json:"host"`
+	// EndTime the time the test run ended
+	EndTime *int `json:"end_time,omitempty"`
+
+	// Host host / url to hit, if this is null it is being dynamically generated through the processor
+	Host *string `json:"host,omitempty"`
 
 	// Id uuid of created load test
 	Id *string `json:"id,omitempty"`
@@ -40,6 +43,9 @@ type Vortex struct {
 	// ResultBuffer same as above, but for the vortexer and result processing.
 	ResultBuffer int `json:"result_buffer"`
 
+	// StartTime the time the test run started
+	StartTime *int `json:"start_time,omitempty"`
+
 	// Workers number of workers per job, remember that IO is blocking on the goroutine, so you can up this and not be CPU
 	// throttled. A good starting point on a 8 vcpu machine is 10 jobs, 36 workers. Depending on the target's response
 	// time and level of processing needed.
@@ -49,8 +55,8 @@ type Vortex struct {
 // ScaleReplicasJSONRequestBody defines body for ScaleReplicas for application/json ContentType.
 type ScaleReplicasJSONRequestBody = Replicas
 
-// StopJSONRequestBody defines body for Stop for application/json ContentType.
-type StopJSONRequestBody = Status
+// EndVortexJSONRequestBody defines body for EndVortex for application/json ContentType.
+type EndVortexJSONRequestBody = Status
 
-// VortexJSONRequestBody defines body for Vortex for application/json ContentType.
-type VortexJSONRequestBody = Vortex
+// StartVortexJSONRequestBody defines body for StartVortex for application/json ContentType.
+type StartVortexJSONRequestBody = Vortex

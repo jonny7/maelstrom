@@ -1,5 +1,7 @@
 package views
 
+import "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/vortex"
+
 templ Index() {
 	<!DOCTYPE html>
 	<html lang="en" class="h-full bg-[color:var(--html-bg-color,theme(colors.white))]" xmlns="">
@@ -106,52 +108,18 @@ templ Index() {
 				</div>
 			</div>
 			<h3 class="pl-4 text-2xl font-semibold font-display text-gray-900 sm:text-3xl">Test Run</h3>
+			<div hx-get="/vortex" hx-target="this" hx-swap="innerHTML" hx-trigger="load, every 2s"></div>
+			<div class="pl-4 mt-5 text-2xl font-semibold font-display text-gray-90">
+				@vortex.Vortex()
+			</div>
+			<h2 class="pl-4 mt-5 text-2xl font-semibold font-display text-gray-900 sm:text-3xl">Nodes </h2>
+			<div hx-get="/replicas" hx-target="this" hx-swap="innerHTML" hx-trigger="load" class="pl-4 w-2/12 mt-5"></div>
+			<div hx-get="/nodes" hx-trigger="load, every 2s" hx-trigger="innerHTML">
 			<div class="bg-gray-100 mt-4 mx-4 p-4 rounded-lg">
-				<section class="bg-gray-100">
-					<div class="max-w-5xl px-4 mx-auto sm:px-6 lg:px-8">
-						<div class="max-w-2xl mx-auto text-center"></div>
-						<div class="grid grid-cols-5 gap-3 text-center md:grid-cols-5">
-							<div>
-								<h3 class="font-bold text-4xl">
-									<span class="text-indigo-600">c5ac2c09</span>
-								</h3>
-								<p class="mt-4 font-medium text-gray-900">Run ID</p>
-							</div>
-							<div>
-								<h3 class="font-bold text-4xl">
-									<span class="text-indigo-600">125m</span>
-								</h3>
-								<p class="mt-4 font-medium text-gray-900">Run Time</p>
-							</div>
-							<div>
-								<h3 class="font-bold text-4xl">
-									<span class="text-indigo-600">10</span>
-								</h3>
-								<p class="mt-4 font-medium text-gray-900">Jobs</p>
-							</div>
-							<div>
-								<h3 class="font-bold text-4xl">
-									<span class="text-indigo-600">36</span>
-								</h3>
-								<p class="mt-4 font-medium text-gray-900">Workers</p>
-							</div>
-							<div>
-								<h3 class="font-bold text-4xl">
-									<span class="text-indigo-600">domain.com</span>
-								</h3>
-								<p class="mt-4 font-medium text-gray-900">Host</p>
-							</div>
-						</div>
-					</div>
-				</section>
+				<div  class="grid grid-cols-4 gap-4 mx-4"></div>
 			</div>
-			<h2 class="pl-4 text-2xl font-semibold font-display text-gray-900 sm:text-3xl">Nodes </h2>
-			<div hx-get="/replicas" hx-target="this" hx-swap="outerHTML" hx-trigger="load" class="pl-4 w-2/12 mt-5">
+			<div class="flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6"></div>
 			</div>
-			<div class="bg-gray-100 mt-4 mx-4 p-4 rounded-lg">
-				<div class="grid grid-cols-4 gap-4 mx-4" hx-get="/nodes" hx-trigger="load, every 2s"></div>
-			</div>
-			<div class="flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6" hx-get="/paginate" hx-trigger="load, every 2s" hx-swap="innerHTML"></div>
 		</body>
 		<script>
     const ctx = document.getElementById('myChart');

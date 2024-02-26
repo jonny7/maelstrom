@@ -3,8 +3,10 @@ package agent
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/caarlos0/env/v10"
+	"github.com/google/uuid"
 	"github.com/hashicorp/serf/serf"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
@@ -13,6 +15,7 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/rs/zerolog/log"
 	"github.com/soheilhy/cmux"
 )
@@ -29,30 +32,40 @@ type agent struct {
 	// shutdowns receive channel events, signifying it should be shut down
 	shutdowns chan struct{}
 	//shutdownLock sync.Mutex @todo make this graceful
+	runs []maelstrom.Vortex
 }
 
-type Agent struct {
-	agent *agent
-}
+//go:generate mockgen -source=agent.go -destination mocks/agent.go -package mocks
 
 type Service interface {
 	Members() []serf.Member
 	Start(host string, jobs, workers int, cbuf, rbuf int)
-	Stop()
+	Stop(id uuid.UUID)
+	Vortexes() []maelstrom.Vortex
 }
 
-func (a Agent) Start(host string, jobs, workers int, cbuf, rbuf int) {
+func (a *agent) Start(host string, jobs, workers int, cbuf, rbuf int) {
 	log.Debug().Msg("starting consumer and processor")
-	a.agent.commander.Start(host, jobs, workers, cbuf, rbuf)
+	a.runs = append(a.runs, a.commander.Start(host, jobs, workers, cbuf, rbuf))
 }
 
-func (a Agent) Stop() {
-	log.Debug().Msg("stop load test was triggered by the user")
-	a.agent.commander.Stop()
+func (a *agent) Stop(id uuid.UUID) {
+	log.Debug().Msgf("stop load %v test was triggered by the user", id)
+	for i, r := range a.runs {
+		if id.String() == *r.Id {
+			now := int(time.Now().Unix())
+			a.runs[i].EndTime = &now
+		}
+	}
+	a.commander.Stop(id)
 }
 
-func (a Agent) Members() []serf.Member {
-	return a.agent.membership.Members()
+func (a *agent) Members() []serf.Member {
+	return a.membership.Members()
+}
+
+func (a *agent) Vortexes() []maelstrom.Vortex {
+	return a.runs
 }
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
@@ -88,7 +101,7 @@ func New(logger logging.Logger, consumer consumer.Consumer, processor processor.
 	if err := a.setupMembership(logger); err != nil {
 		return nil, err
 	}
-	return &Agent{agent: a}, nil
+	return a, nil
 }
 
 // setupMembership configures the membership for this Serf node or errors
