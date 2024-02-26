@@ -1,14 +1,18 @@
 package commander
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,30 +22,76 @@ type Commander struct {
 	consumer  consumer.Consumer
 	processor processor.Processor
 	client    sender.HTTPDoer
-	interrupt chan struct{}
+	interrupt map[uuid.UUID]vortexWithInterupt
 	logger    logging.Logger
 	metrics   metrics.Metrics
 }
 
-func (c *Commander) Stop() {
-	close(c.interrupt)
+type vortexWithInterupt struct {
+	maelstrom.Vortex
+	done chan struct{}
 }
 
-func (c *Commander) Start(host string, jobs, workers, cbuf, rbuf int) {
-	c.interrupt = make(chan struct{})
+func toInt(i int) *int {
+	return &i
+}
+
+func toString(s string) *string {
+	return &s
+}
+
+func (c *Commander) Vortexes() []maelstrom.Vortex {
+	var out []maelstrom.Vortex
+	interupts := c.interrupt
+	for _, v := range interupts {
+		out = append(out, v.Vortex)
+	}
+	return out
+}
+
+func (c *Commander) Stop(id uuid.UUID) {
+	i, ok := c.interrupt[id]
+	if !ok {
+		c.logger.LogWithError(logging.ErrorLevel, "vortex run was not found", fmt.Errorf("id: %v was not found", id))
+		return
+	}
+	close(i.done)
+	delete(c.interrupt, id)
+}
+
+func (c *Commander) Start(host string, jobs, workers, cbuf, rbuf int) maelstrom.Vortex {
+	u := uuid.New()
+	if c.interrupt == nil {
+		c.interrupt = make(map[uuid.UUID]vortexWithInterupt)
+	}
+	v := maelstrom.Vortex{
+		ConsumerBuffer: cbuf,
+		EndTime:        nil,
+		Host:           &host,
+		Id:             toString(u.String()),
+		Jobs:           jobs,
+		ResultBuffer:   rbuf,
+		StartTime:      toInt(int(time.Now().Unix())),
+		Workers:        workers,
+	}
+	c.interrupt[u] = vortexWithInterupt{
+		Vortex: v,
+		done:   make(chan struct{}),
+	}
 
 	for j := 0; j < jobs; j++ {
-		work := c.consumer.Start(c.interrupt, cbuf)
-		load := c.processor.Process(c.interrupt, work, host, cbuf)
+		work := c.consumer.Start(c.interrupt[u].done, cbuf)
+		load := c.processor.Process(c.interrupt[u].done, work, host, cbuf)
 
 		results := make([]<-chan result, workers)
 		for w := 0; w < workers; w++ {
-			results[w] = c.vortexer(c.interrupt, load, rbuf)
+			results[w] = c.vortexer(c.interrupt[u].done, load, rbuf)
 		}
 
-		merged := merge(c.interrupt, results...)
-		c.analytics(c.interrupt, merged)
+		merged := merge(c.interrupt[u].done, results...)
+		c.analytics(c.interrupt[u].done, merged)
 	}
+	return v
 }
 
 func merge(done chan struct{}, channels ...<-chan result) chan result {
@@ -140,7 +190,6 @@ func NewCommander(cfg Config, consumer consumer.Consumer, processor processor.Pr
 		consumer:  consumer,
 		processor: processor,
 		client:    client,
-		interrupt: make(chan struct{}),
 		logger:    logger,
 		metrics:   metrics,
 	}

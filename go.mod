@@ -1,6 +1,6 @@
 module github.com/jonny7/maelstrom
 
-go 1.21.5
+go 1.22.0
 
 require (
 	github.com/a-h/templ v0.2.476
@@ -75,6 +75,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.7.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
