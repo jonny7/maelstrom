@@ -159,7 +159,7 @@ func Index() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div hx-get=\"/replicas\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load\" class=\"pl-4 w-2/12 mt-5\"></div><div class=\"bg-gray-100 mt-4 mx-4 p-4 rounded-lg\"><div class=\"grid grid-cols-4 gap-4 mx-4\" hx-get=\"/nodes\" hx-trigger=\"load, every 2s\"></div></div><div class=\"flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6\" hx-get=\"/paginate\" hx-trigger=\"load, every 2s\" hx-swap=\"innerHTML\"></div></body><script>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div hx-get=\"/replicas\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load\" class=\"pl-4 w-2/12 mt-5\"></div><div hx-get=\"/nodes\" hx-trigger=\"load, every 2s\" hx-trigger=\"innerHTML\"><div class=\"bg-gray-100 mt-4 mx-4 p-4 rounded-lg\"><div class=\"grid grid-cols-4 gap-4 mx-4\"></div></div><div class=\"flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6\"></div></div></body><script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

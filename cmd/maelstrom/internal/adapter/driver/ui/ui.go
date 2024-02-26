@@ -15,7 +15,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/nodes"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/pagination"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/replicas"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/vortex"
 
@@ -94,14 +93,6 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 
 func (u UI) setupRoutes(router *chi.Mux) {
 	router.Get("/", u.Index)
-	router.Get("/vortexes", u.VortexForm)
-	//router.Get("/nodes", u.Nodes)
-	//router.Get("/paginate", u.Paginate)
-	//router.Get("/replicas", u.Replicas)
-	//router.Put("/replicas", u.ScaleReplicas)
-	//router.Get("/vortexes", u.Vortexes)
-	//router.Post("/vortexes", u.StartVortex)
-	//router.Delete("/vortexes", u.EndVortex)
 }
 
 func (u UI) Index(w http.ResponseWriter, req *http.Request) {
@@ -116,11 +107,6 @@ func (u UI) Nodes(w http.ResponseWriter, req *http.Request) {
 		return members[i].Name < members[j].Name
 	})
 	if err := nodes.Nodes(members).Render(req.Context(), w); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-}
-func (u UI) Paginate(w http.ResponseWriter, req *http.Request) {
-	if err := pagination.Pagination(len(u.app.Agent.Membership())).Render(req.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
@@ -214,10 +200,6 @@ func (u UI) EndVortex(w http.ResponseWriter, _ *http.Request, id string) {
 func (u UI) Health(w http.ResponseWriter, r *http.Request) {
 	//TODO implement me
 	panic("implement me")
-}
-
-func (u UI) VortexForm(writer http.ResponseWriter, request *http.Request) {
-
 }
 
 //func (u UI) vortex() map[int64]model.SampleValue {
