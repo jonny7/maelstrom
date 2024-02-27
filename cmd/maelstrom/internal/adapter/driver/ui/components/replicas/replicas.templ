@@ -6,7 +6,7 @@ templ Replicas(replicas int) {
 	<form hx-put="/replicas" hx-target="this" hx-swap="outerHTML">
 		<div class="relative mt-2 rounded-md shadow-sm">
 			<label for="replicas" class="block text-lg font-semibold font-medium leading-6 text-gray-900">Desired Replicas</label>
-			<input value={ fmt.Sprintf("%d", replicas) } type="number" name="replicas" id="replicas" class="text-center w-20  block w-full rounded-md border-0 py-1.5 t-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+			<input required min="0" value={ fmt.Sprintf("%d", replicas) } type="number" name="replicas" id="replicas" class="text-center w-20  block w-full rounded-md border-0 py-1.5 t-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
 			<button type="submit" class="mt-2 focus:outline-none text-white bg-indigo-700 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-purple-indigo">Scale</button>
 		</div>
 	</form>
@@ -16,7 +16,7 @@ templ ReplicasWithError(replicas int, err string) {
 	<form hx-put="/replicas" hx-target="this" hx-swap="outerHTML">
 		<div class="relative mt-2 rounded-md shadow-sm">
 			<label for="replicas" class="block text-lg font-semibold font-medium leading-6 text-gray-900">Desired Replicas</label>
-			<input value={ fmt.Sprintf("%d", replicas) } type="number" name="replicas" id="replicas" class="text-center w-20  block w-full rounded-md border-0 py-1.5 t-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+			<input required min="0" value={ fmt.Sprintf("%d", replicas) } type="number" name="replicas" id="replicas" class="text-center w-20  block w-full rounded-md border-0 py-1.5 t-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
 			<p class="text-red-500 text-xs">{ err }</p>
 			<button type="submit" class="mt-2 focus:outline-none text-white bg-indigo-700 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-purple-indigo">Scale</button>
 		</div>
