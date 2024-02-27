@@ -58,10 +58,7 @@ func VortexToDTO(vortexes []maelstrom.Vortex) []Vortex {
 }
 
 func timeToBool(t *int) bool {
-	if t == nil {
-		return false
-	}
-	return true
+	return t != nil
 }
 
 // @todo add tests here
