@@ -35,6 +35,7 @@ func MemberDTO(nodes []serf.Member) []Member {
 
 type Vortex struct {
 	ID, Host, ConsumerBuffer, ResultBuffer, Workers, Jobs, RunningTime string
+	Finished                                                           bool
 }
 
 func VortexToDTO(vortexes []maelstrom.Vortex) []Vortex {
@@ -50,9 +51,17 @@ func VortexToDTO(vortexes []maelstrom.Vortex) []Vortex {
 			Workers:        strconv.Itoa(v.Workers),
 			Jobs:           strconv.Itoa(v.Jobs),
 			RunningTime:    fmt.Sprintf("%v", now.Sub(start)),
+			Finished:       timeToBool(v.EndTime),
 		})
 	}
 	return runs
+}
+
+func timeToBool(t *int) bool {
+	if t == nil {
+		return false
+	}
+	return true
 }
 
 // @todo add tests here
