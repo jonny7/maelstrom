@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/serf/serf"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
@@ -70,7 +70,7 @@ func (a *agent) Vortexes() []maelstrom.Vortex {
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
 // The agent will also set up all membership for the Serf cluster
-func New(logger logging.Logger, consumer consumer.Consumer, processor processor.Processor, client sender.HTTPDoer, metrics metrics.Metrics) (Service, error) {
+func New(logger logging.Logger, generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, metrics metrics.Metrics) (Service, error) {
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func New(logger logging.Logger, consumer consumer.Consumer, processor processor.
 	}
 
 	// create commander
-	a.commander = commander.NewCommander(cfg.Commander, consumer, processor, client, logger, metrics)
+	a.commander = commander.NewCommander(cfg.Commander, generator, processor, client, logger, metrics)
 
 	// setup mux or err
 	if err := a.setupMux(); err != nil {

@@ -3,7 +3,7 @@ package application
 import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/k8s"
@@ -17,8 +17,8 @@ type App struct {
 	K8s    k8s.K8s
 }
 
-func New(consumer consumer.Consumer, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) App {
-	a, err := agent.New(logger, consumer, processor, client, metrics)
+func New(generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) App {
+	a, err := agent.New(logger, generator, processor, client, metrics)
 	if err != nil {
 		logger.LogWithError(logging.ErrorLevel, "unable to initialize agent", err)
 	}
