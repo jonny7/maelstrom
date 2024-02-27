@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
@@ -19,7 +19,7 @@ import (
 type Commander struct {
 	config Config
 	//raft      *raft.Raft
-	consumer  consumer.Consumer
+	generator generator.Generator
 	processor processor.Processor
 	client    sender.HTTPDoer
 	interrupt map[uuid.UUID]vortexWithInterupt
@@ -80,7 +80,7 @@ func (c *Commander) Start(host string, jobs, workers, cbuf, rbuf int) maelstrom.
 	}
 
 	for j := 0; j < jobs; j++ {
-		work := c.consumer.Start(c.interrupt[u].done, cbuf)
+		work := c.generator.Start(c.interrupt[u].done, cbuf)
 		load := c.processor.Process(c.interrupt[u].done, work, host, cbuf)
 
 		results := make([]<-chan result, workers)
@@ -184,10 +184,10 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request, buffer
 	return ch
 }
 
-func NewCommander(cfg Config, consumer consumer.Consumer, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) Commander {
+func NewCommander(cfg Config, generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) Commander {
 	cmdr := Commander{
 		config:    cfg,
-		consumer:  consumer,
+		generator: generator,
 		processor: processor,
 		client:    client,
 		logger:    logger,

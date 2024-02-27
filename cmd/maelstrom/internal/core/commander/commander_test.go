@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	mocklogger "github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
-	mocksconsumer "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/consumer/mocks"
+	mockgenerator "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator/mocks"
 	mockprocessor "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor/mocks"
 	mocksender "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender/mocks"
 	mockmetrics "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics/mocks"
@@ -23,7 +23,7 @@ func TestNewCommander(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	c := mocksconsumer.NewMockConsumer(ctrl)
+	c := mockgenerator.NewMockGenerator(ctrl)
 	p := mockprocessor.NewMockProcessor(ctrl)
 	h := mocksender.NewMockHTTPDoer(ctrl)
 	m := mockmetrics.NewMockMetrics(ctrl)
@@ -52,7 +52,7 @@ func TestCommanderStart(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	c := mocksconsumer.NewMockConsumer(ctrl)
+	c := mockgenerator.NewMockGenerator(ctrl)
 	p := mockprocessor.NewMockProcessor(ctrl)
 	h := mocksender.NewMockHTTPDoer(ctrl)
 	m := mockmetrics.NewMockMetrics(ctrl)
@@ -69,7 +69,7 @@ func TestAnalytics(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	c := mocksconsumer.NewMockConsumer(ctrl)
+	c := mockgenerator.NewMockGenerator(ctrl)
 	p := mockprocessor.NewMockProcessor(ctrl)
 	h := mocksender.NewMockHTTPDoer(ctrl)
 	m := mockmetrics.NewMockMetrics(ctrl)
@@ -101,7 +101,7 @@ func TestVortexer(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	c := mocksconsumer.NewMockConsumer(ctrl)
+	c := mockgenerator.NewMockGenerator(ctrl)
 	p := mockprocessor.NewMockProcessor(ctrl)
 	h := mocksender.NewMockHTTPDoer(ctrl)
 	m := mockmetrics.NewMockMetrics(ctrl)

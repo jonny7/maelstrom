@@ -19,10 +19,6 @@ import (
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/consumer"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/metrics"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/processor"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/sender"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -39,7 +35,7 @@ func run() error {
 	}
 
 	// @todo add flag to disable/enable
-	m := metrics.NewMetrics(prometheus.NewMetrics())
+	m := prometheus.NewMetrics()
 
 	go func() {
 		// @todo move this
@@ -48,24 +44,22 @@ func run() error {
 	}()
 
 	// @todo make env or arg
-	c, err := kafka.NewFake(m) //kafka.MustNewKafka(logger, m)
+	g, err := kafka.NewFake(m) //kafka.MustNewKafka(logger, m)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client := consumer.NewConsumer(c)
-	defer client.Close()
+	defer g.Close()
 
 	proc := process.NewProcessor(logger, m)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	p := processor.NewProcessor(proc)
+	// @todo extend config vars
+	h := &http.Client{Timeout: 1500 * time.Millisecond}
 
-	h := sender.NewSender(&http.Client{Timeout: 1500 * time.Millisecond})
-
-	app := service.NewApplication(client, p, h, logger, m)
+	app := service.NewApplication(g, proc, h, logger, m)
 
 	api := a.New(app)
 

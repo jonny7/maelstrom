@@ -97,18 +97,18 @@ func (u UI) setupRoutes(router *chi.Mux) {
 	router.Get("/new-vortex", u.NewVortex)
 }
 
-func (u UI) Index(w http.ResponseWriter, req *http.Request) {
-	if err := views.Index().Render(req.Context(), w); err != nil {
+func (u UI) Index(w http.ResponseWriter, r *http.Request) {
+	if err := views.Index().Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func (u UI) Nodes(w http.ResponseWriter, req *http.Request) {
+func (u UI) Nodes(w http.ResponseWriter, r *http.Request) {
 	members := u.app.Agent.Membership()
 	sort.Slice(members, func(i, j int) bool {
 		return members[i].Name < members[j].Name
 	})
-	if err := nodes.Nodes(members).Render(req.Context(), w); err != nil {
+	if err := nodes.Nodes(members).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
@@ -148,9 +148,9 @@ func (u UI) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
 	panic("implement me")
 }
 
-func (u UI) Vortexes(w http.ResponseWriter, req *http.Request) {
+func (u UI) Vortexes(w http.ResponseWriter, r *http.Request) {
 	runs := u.app.Agent.Vortexes()
-	if err := vortex.Run(runs).Render(req.Context(), w); err != nil {
+	if err := vortex.Run(runs).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

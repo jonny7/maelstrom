@@ -108,20 +108,10 @@ func setupMiddlewares(router *chi.Mux) {
 	router.Use(render.SetContentType(render.ContentTypeJSON))
 }
 
-func (s Server) setupRoutes(router *chi.Mux) {
-	router.Get("/healthz", s.Health)
-	router.Get("/nodes", s.Nodes)
-	router.Post("/replicas", s.Replicas)
-	router.Post("/vortex", s.StartVortex)
-	//router.Delete("/delete", s.EndVortex)
-}
-
 func (s Server) Run(done chan struct{}, errs chan error, mountRouter func(router chi.Router) http.Handler) {
 	// create router
 	mux := chi.NewRouter()
 	setupMiddlewares(mux)
-	// generate routes
-	s.setupRoutes(mux)
 	// create base router
 	base := chi.NewRouter()
 	base.Mount("/api", mountRouter(mux))
