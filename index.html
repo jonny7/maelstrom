@@ -41,6 +41,14 @@
                     </div>
                 </div>
             </div>
+            <form hx-put="/replicas" hx-target="this" hx-swap="outerHTML">
+                <div class="relative mt-2 rounded-md shadow-sm">
+                    <label for="replicas" class="block text-lg font-semibold font-medium leading-6 text-gray-900">Desired Replicas</label>
+                    <input min="0" value={ fmt.Sprintf("%d", replicas) } type="number" name="replicas" id="replicas" class="text-center w-20  block w-full rounded-md border-0 py-1.5 t-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
+                    <p class="text-red-500 text-xs">{ err }</p>
+                    <button type="submit" class="mt-2 focus:outline-none text-white bg-indigo-700 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-purple-indigo">Scale</button>
+                </div>
+            </form>
             <div class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
                 <button type="button" class="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                     <span class="absolute -inset-1.5"></span>
@@ -60,7 +68,7 @@
 <h2>Nodes </h2>
 <div class="grid grid-cols-4 flex flex-row gap-4 mx-4">
     <div hx-get="/nodes" hx-trigger="every 2s">
-
+        <button hx-target="this" hx-get="https://duckduckgo.com" hx-trigger="intersect" type="submit" class="focus:outline-none text-white bg-indigo-700 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-purple-indigo">New Run</button>
     </div>
 </div>
 </body>

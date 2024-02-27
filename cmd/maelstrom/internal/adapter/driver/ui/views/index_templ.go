@@ -10,8 +10,6 @@ import "context"
 import "io"
 import "bytes"
 
-import "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/vortex"
-
 func Index() templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
@@ -142,15 +140,7 @@ func Index() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><div hx-get=\"/vortex\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load, every 2s\"></div><div class=\"pl-4 mt-5 text-2xl font-semibold font-display text-gray-90\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = vortex.Vortex().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><h2 class=\"pl-4 mt-5 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><div hx-get=\"/vortex\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load, every 2s\"></div><div class=\"pl-4 mt-5 text-2xl font-semibold font-display text-gray-90\"><div hx-get=\"/new-vortex\" hx-target=\"this\" hx-swap=\"outerHTML\" hx-trigger=\"load\"></div></div><h2 class=\"pl-4 mt-5 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

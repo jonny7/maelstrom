@@ -1,7 +1,5 @@
 package views
 
-import "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/vortex"
-
 templ Index() {
 	<!DOCTYPE html>
 	<html lang="en" class="h-full bg-[color:var(--html-bg-color,theme(colors.white))]" xmlns="">
@@ -110,7 +108,7 @@ templ Index() {
 			<h3 class="pl-4 text-2xl font-semibold font-display text-gray-900 sm:text-3xl">Test Run</h3>
 			<div hx-get="/vortex" hx-target="this" hx-swap="innerHTML" hx-trigger="load, every 2s"></div>
 			<div class="pl-4 mt-5 text-2xl font-semibold font-display text-gray-90">
-				@vortex.Vortex()
+			<div hx-get="/new-vortex" hx-target="this" hx-swap="outerHTML" hx-trigger="load"></div>
 			</div>
 			<h2 class="pl-4 mt-5 text-2xl font-semibold font-display text-gray-900 sm:text-3xl">Nodes </h2>
 			<div hx-get="/replicas" hx-target="this" hx-swap="innerHTML" hx-trigger="load" class="pl-4 w-2/12 mt-5"></div>

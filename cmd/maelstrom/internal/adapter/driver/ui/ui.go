@@ -93,6 +93,8 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 
 func (u UI) setupRoutes(router *chi.Mux) {
 	router.Get("/", u.Index)
+	router.Get("/vortex-form", u.VortexForm)
+	router.Get("/new-vortex", u.NewVortex)
 }
 
 func (u UI) Index(w http.ResponseWriter, req *http.Request) {
@@ -181,7 +183,7 @@ func (u UI) StartVortex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u.app.Agent.StartVortex(r.FormValue("url"), int(jobs), int(workers), int(cbuf), int(rbuf))
-	if e := vortex.Vortex().Render(r.Context(), w); e != nil {
+	if e := vortex.Form().Render(r.Context(), w); e != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
@@ -195,6 +197,18 @@ func (u UI) EndVortex(w http.ResponseWriter, _ *http.Request, id string) {
 	}
 	u.app.Agent.EndVortex(validatedUUID)
 	w.WriteHeader(202)
+}
+
+func (u UI) VortexForm(w http.ResponseWriter, r *http.Request) {
+	if err := vortex.Vortex().Render(r.Context(), w); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (u UI) NewVortex(w http.ResponseWriter, r *http.Request) {
+	if err := vortex.Form().Render(r.Context(), w); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (u UI) Health(w http.ResponseWriter, r *http.Request) {
