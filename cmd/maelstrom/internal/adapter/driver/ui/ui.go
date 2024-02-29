@@ -17,6 +17,7 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/nodes"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/replicas"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/vortex"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/views"
@@ -150,7 +151,7 @@ func (u UI) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
 
 func (u UI) Vortexes(w http.ResponseWriter, r *http.Request) {
 	runs := u.app.Agent.Vortexes()
-	if err := vortex.Run(runs).Render(r.Context(), w); err != nil {
+	if err := vortex.Run(dto.VortexToDTO(runs)).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
