@@ -2,6 +2,7 @@ package agent
 
 import (
 	"github.com/google/uuid"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"

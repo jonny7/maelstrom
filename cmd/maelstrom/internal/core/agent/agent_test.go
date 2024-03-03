@@ -7,6 +7,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/travisjeffery/go-dynaport"
+	"go.uber.org/mock/gomock"
+
 	mocklogger "github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	mockgenerator "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator/mocks"
@@ -15,8 +18,6 @@ import (
 	mocksender "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender/mocks"
 	mockmetrics "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics/mocks"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
-	"github.com/travisjeffery/go-dynaport"
-	"go.uber.org/mock/gomock"
 )
 
 func TestRPCAddrErr(t *testing.T) {

@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent/mocks"
 	"go.uber.org/mock/gomock"
+
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent/mocks"
 )
 
 func setup(t *testing.T) *mocks.MockService {

@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/goccy/go-json"
 	"github.com/google/uuid"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
