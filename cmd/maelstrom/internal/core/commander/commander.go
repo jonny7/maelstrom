@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
-	"github.com/rs/zerolog/log"
 )
 
 type Commander struct {
@@ -32,11 +33,21 @@ type vortexWithInterupt struct {
 	done chan struct{}
 }
 
-func toInt(i int) *int {
+//go:generate mockgen -source=commander.go -destination mocks/commander.go -package mock
+
+type Command interface {
+	Vortexes() []maelstrom.Vortex
+	Stop(id uuid.UUID)
+	Start(host string, jobs int, workers int, cbuf int, rbuf int) maelstrom.Vortex
+	Leave(id string) error
+	Join(id string, addr string) error
+}
+
+func ToInt(i int) *int {
 	return &i
 }
 
-func toString(s string) *string {
+func ToString(s string) *string {
 	return &s
 }
 
@@ -68,10 +79,10 @@ func (c *Commander) Start(host string, jobs, workers, cbuf, rbuf int) maelstrom.
 		ConsumerBuffer: cbuf,
 		EndTime:        nil,
 		Host:           &host,
-		Id:             toString(u.String()),
+		Id:             ToString(u.String()),
 		Jobs:           jobs,
 		ResultBuffer:   rbuf,
-		StartTime:      toInt(int(time.Now().Unix())),
+		StartTime:      ToInt(int(time.Now().Unix())),
 		Workers:        workers,
 	}
 	c.interrupt[u] = vortexWithInterupt{
@@ -184,7 +195,7 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request, buffer
 	return ch
 }
 
-func NewCommander(cfg Config, generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) Commander {
+func NewCommander(cfg Config, generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) *Commander {
 	cmdr := Commander{
 		config:    cfg,
 		generator: generator,
@@ -194,7 +205,7 @@ func NewCommander(cfg Config, generator generator.Generator, processor processor
 		metrics:   metrics,
 	}
 
-	return cmdr
+	return &cmdr
 }
 
 // @todo do later

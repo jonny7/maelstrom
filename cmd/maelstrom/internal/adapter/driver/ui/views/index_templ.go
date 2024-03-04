@@ -122,7 +122,7 @@ func Index() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span> <svg class=\"h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0\"></path></svg></button></div></div></div></nav><h2 class=\"pl-4 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</span> <svg class=\"h-6 w-6\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0\"></path></svg></button></div></div></div></nav><h2 class=\"pl-4 mb-2 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -131,80 +131,94 @@ func Index() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div class=\"flex justify-center\"><div style=\"height:300px;\" class=\"h-2/6 w-11/12\"><canvas id=\"myChart\"></canvas></div></div><h3 class=\"pl-4 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div style=\"height: 300px\" class=\"pl-4 mb-12 h-2/6 w-11/12\"><div><form class=\"flex items-end\"><select hx-get=\"/chart\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load, updateChartSelectOption from:body\" class=\"py-3 px-4 pe-9 block w-1/9 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600\"></select> <button type=\"submit\" class=\"ml-2 focus:outline-none text-white bg-indigo-700 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 font-sm rounded-lg text-sm py-2.5 px-2.5 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-purple-indigo\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Var14 := `Test Run`
+		templ_7745c5c3_Var14 := `Update`
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><div hx-get=\"/vortex\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load, every 2s\"></div><div class=\"pl-4 mt-5 text-2xl font-semibold font-display text-gray-90\"><div hx-get=\"/new-vortex\" hx-target=\"this\" hx-swap=\"outerHTML\" hx-trigger=\"load\"></div></div><h2 class=\"pl-4 mt-5 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</button></form></div><canvas id=\"chart\"></canvas></div><h3 class=\"pl-4 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Var15 := `Nodes `
+		templ_7745c5c3_Var15 := `Test Run`
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div hx-get=\"/replicas\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load\" class=\"pl-4 w-2/12 mt-5\"></div><div hx-get=\"/nodes\" hx-trigger=\"load, every 2s\" hx-trigger=\"innerHTML\"><div class=\"bg-gray-100 mt-4 mx-4 p-4 rounded-lg\"><div class=\"grid grid-cols-4 gap-4 mx-4\"></div></div><div class=\"flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6\"></div></div></body><script>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><div hx-get=\"/vortex\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load, every 5s, updateChartSelectOption from:body\"></div><div class=\"pl-4 mt-5 text-2xl font-semibold font-display text-gray-90\"><div hx-get=\"/new-vortex\" hx-target=\"this\" hx-swap=\"outerHTML\" hx-trigger=\"load\"></div></div><h2 class=\"pl-4 mt-5 text-2xl font-semibold font-display text-gray-900 sm:text-3xl\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Var16 := `
-    const ctx = document.getElementById('myChart');
-
-    const config = {
-        type:
-            'line',
-        options: {
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    stacked: true,
-                },
-                y: {
-                    stacked: true
-                }
-            }
-        },
-        data: {
-            labels: [],
-            datasets: [{
-                type: 'line',
-                data: [{x: "2020-02-15 18:37:37", y: 225}, {
-                    x: "2020-02-15 18:37:38",
-                    y: 625
-                }, {x: "2020-02-15 18:37:39", y: 725}],
-                label: "RPS",
-                borderColor: '#4F46E5FF',
-                backgroundColor: '#4F46E5FF',
-            }, {
-                type: 'bar',
-                label: '2xx',
-                stacked: true,
-                data: [10, 20, 30, 40, 80, 90, 98, 121],
-                backgroundColor: '#46e54f',
-            }, {
-                type: 'bar',
-                label: 'Non 2xx',
-                stacked: true,
-                data: [10, 20, 30, 40, 80, 90, 98, 121],
-                backgroundColor: '#e54f46',
-            }]
-        }
-    };
-    const c = new Chart(ctx, config)
-    c.data.datasets[0].data[3] = {x: "2020-02-15 18:37:40", y: 825};
-    c.data.datasets[0].data[4] = {x: "2020-02-15 18:37:41", y: 925};
-    c.data.datasets[0].data[5] = {x: "2020-02-15 18:37:42", y: 1025};
-    c.data.datasets[0].data[6] = {x: "2020-02-15 18:37:43", y: 1125};
-    c.data.datasets[0].data[7] = {x: "2020-02-15 18:37:44", y: 1225};
-    c.update();
-`
+		templ_7745c5c3_Var16 := `Nodes `
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div hx-get=\"/replicas\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load\" class=\"pl-4 w-2/12 mt-5\"></div><div hx-get=\"/nodes\" hx-trigger=\"load, every 5s\" hx-trigger=\"innerHTML\"><div class=\"bg-gray-100 mt-4 mx-4 p-4 rounded-lg\"><div class=\"grid grid-cols-4 gap-4 mx-4\"></div></div><div class=\"flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6\"></div></div></body><script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Var17 := `
+				const ctx = document.getElementById('chart');
+
+				const config = {
+					type:
+							'line',
+					animationEasing: 'linear',
+					options: {
+						maintainAspectRatio: false,
+						scales: {
+							x: {
+								stacked: true,
+							},
+							y: {
+								stacked: true
+							}
+						}
+					},
+					data: {
+						labels: [],
+						datasets: []
+					}
+				};
+				new Chart(ctx, config);
+	//
+	// {
+	//     type: 'bar',
+	//     label: '2xx',
+	//     stacked: true,
+	//     data: [10, 20, 30, 40, 80, 90, 98, 121],
+	//     backgroundColor: '#46e54f',
+	// }, {
+	//     type: 'bar',
+	//     label: 'Non 2xx',
+	//     stacked: true,
+	//     data: [10, 20, 30, 40, 80, 90, 98, 121],
+	//     backgroundColor: '#e54f46',
+	// }
+	// setInterval(function () {
+	// 	c.data.datasets[0].data.push({x: "2020-02-15 18:37:41", y: 925});
+	// 	c.data.datasets[0].data.push({x: "2020-02-15 18:37:42", y: 1025});
+	// 	c.data.datasets[0].data.push({x: "2020-02-15 18:37:43", y: 1125});
+	// 	c.data.datasets[0].data.push({x: "2020-02-15 18:37:44", y: 1225});
+	//
+	// 	// c.data.datasets.forEach((dataset) => {
+	// 	// 	dataset.type = 'bar';
+	// 	// 	dataset.label = 'New';
+	// 	// 	dataset.stacked = true;
+	// 	// 	dataset.backgroundColor = '#f8df07'
+	// 	// 	dataset.data.push({x:"2020-02-15 18:30:44", y: 500});
+	// 	// });
+	// 	c.update('none');
+	// 		}, 2000
+	// )
+
+`
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

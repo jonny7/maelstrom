@@ -8,6 +8,9 @@ import (
 	"github.com/caarlos0/env/v10"
 	"github.com/google/uuid"
 	"github.com/hashicorp/serf/serf"
+	"github.com/rs/zerolog/log"
+	"github.com/soheilhy/cmux"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator"
@@ -16,15 +19,13 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
-	"github.com/rs/zerolog/log"
-	"github.com/soheilhy/cmux"
 )
 
 type agent struct {
 	// Config is the agents configuration
 	config Config
 	// Commander is a raft based set of changes to apply across the Maelstrom nodes
-	commander commander.Commander
+	commander commander.Command
 	// mux helps serve UDP & TCP over the same port
 	mux cmux.CMux
 	// membership configures Serf and eventing
@@ -111,7 +112,7 @@ func (a *agent) setupMembership(logger logging.Logger) error {
 		return err
 	}
 
-	a.membership, err = membership.New(&a.commander, membership.Config{
+	a.membership, err = membership.New(a.commander, membership.Config{
 		NodeName: a.config.NodeName,
 		BindAddr: a.config.BindAddr,
 		Tags: map[string]string{

@@ -10,6 +10,7 @@ import (
 
 type FakeHTTP struct{}
 
+// NewFakeHTTP returns a mock HTTP client, which returns random HTTP responses. This is useful for testing metrics and charting
 func NewFakeHTTP() FakeHTTP {
 	return FakeHTTP{}
 }

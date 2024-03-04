@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/twmb/franz-go/pkg/kgo"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/requester"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
-	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 type Kafka struct {

@@ -10,8 +10,10 @@ import "context"
 import "io"
 import "bytes"
 
-import "github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
-import "fmt"
+import (
+	"fmt"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
+)
 
 func status(status string) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {

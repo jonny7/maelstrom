@@ -13,18 +13,22 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/chart"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/nodes"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/replicas"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/vortex"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
+
+	"github.com/prometheus/client_golang/api"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	promcfg "github.com/prometheus/common/config"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/views"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
-	"github.com/prometheus/client_golang/api"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	promcfg "github.com/prometheus/common/config"
 )
 
 type UI struct {
@@ -92,12 +96,13 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 }
 
 func (u UI) setupRoutes(router *chi.Mux) {
-	router.Get("/", u.Index)
-	router.Get("/vortex-form", u.VortexForm)
-	router.Get("/new-vortex", u.NewVortex)
+	router.Get("/", u.index)
+	router.Get("/vortex-form", u.vortexForm)
+	router.Get("/new-vortex", u.newVortex)
+	router.Get("/chart", u.chart)
 }
 
-func (u UI) Index(w http.ResponseWriter, r *http.Request) {
+func (u UI) index(w http.ResponseWriter, r *http.Request) {
 	if err := views.Index().Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -150,7 +155,7 @@ func (u UI) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
 
 func (u UI) Vortexes(w http.ResponseWriter, r *http.Request) {
 	runs := u.app.Agent.Vortexes()
-	if err := vortex.Run(runs).Render(r.Context(), w); err != nil {
+	if err := vortex.Run(dto.VortexToDTO(runs)).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
@@ -183,6 +188,7 @@ func (u UI) StartVortex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u.app.Agent.StartVortex(r.FormValue("url"), int(jobs), int(workers), int(cbuf), int(rbuf))
+	w.Header().Add("HX-Trigger", "updateChartSelectOption")
 	if e := vortex.Form().Render(r.Context(), w); e != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -199,21 +205,30 @@ func (u UI) EndVortex(w http.ResponseWriter, _ *http.Request, id string) {
 	w.WriteHeader(202)
 }
 
-func (u UI) VortexForm(w http.ResponseWriter, r *http.Request) {
+func (u UI) vortexForm(w http.ResponseWriter, r *http.Request) {
 	if err := vortex.Vortex().Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func (u UI) NewVortex(w http.ResponseWriter, r *http.Request) {
+func (u UI) newVortex(w http.ResponseWriter, r *http.Request) {
 	if err := vortex.Form().Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func (u UI) Health(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
+func (u UI) Health(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(204)
+}
+
+func (u UI) chart(w http.ResponseWriter, r *http.Request) {
+	v := u.app.Agent.Vortexes()
+	sort.Slice(v, func(i, j int) bool {
+		return *v[i].StartTime > *v[j].StartTime
+	})
+	if err := chart.Chart(dto.VortexToDTO(v)).Render(r.Context(), w); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 //func (u UI) vortex() map[int64]model.SampleValue {

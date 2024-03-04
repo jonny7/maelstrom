@@ -3,9 +3,10 @@ package prometheus
 import (
 	"strconv"
 
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 )
 
 type Engine struct {

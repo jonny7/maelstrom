@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/metrics/prometheus"
@@ -19,7 +21,6 @@ import (
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {

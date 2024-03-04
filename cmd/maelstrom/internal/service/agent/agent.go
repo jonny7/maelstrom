@@ -2,7 +2,9 @@ package agent
 
 import (
 	"github.com/google/uuid"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
 )
 
@@ -26,6 +28,6 @@ func (s Service) EndVortex(id uuid.UUID) {
 	s.agent.Stop(id)
 }
 
-func (s Service) Vortexes() []dto.Vortex {
-	return dto.VortexToDTO(s.agent.Vortexes())
+func (s Service) Vortexes() []maelstrom.Vortex {
+	return s.agent.Vortexes()
 }

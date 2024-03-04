@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"github.com/hashicorp/serf/serf"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
 	"github.com/travisjeffery/go-dynaport"
 	"go.uber.org/mock/gomock"
 
-	. "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
+
 	"github.com/stretchr/testify/require"
+
+	. "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 )
 
 // member implements membership interface

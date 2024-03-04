@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/serf/serf"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 )
 
