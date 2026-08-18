@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,16 +13,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/k8s"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/metrics/prometheus"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/process"
-	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
-	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
+	"github.com/jonny7/maelstrom/internal/adapter/driven/k8s"
+	"github.com/jonny7/maelstrom/internal/adapter/driven/kafka"
+	"github.com/jonny7/maelstrom/internal/adapter/driven/metrics/prometheus"
+	"github.com/jonny7/maelstrom/internal/adapter/driven/process"
+	a "github.com/jonny7/maelstrom/internal/adapter/driver/api"
+	u "github.com/jonny7/maelstrom/internal/adapter/driver/ui"
+	"github.com/jonny7/maelstrom/internal/application"
+	"github.com/jonny7/maelstrom/internal/core/agent"
+	"github.com/jonny7/maelstrom/internal/logging"
+	"github.com/jonny7/maelstrom/internal/maelstrom"
 )
 
 func main() {

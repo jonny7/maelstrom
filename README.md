@@ -44,8 +44,8 @@ All configuration is via env vars.
 The OpenAPI spec lives at `maelstrom.yaml`; the generated chi server and types are used by the API adapter only.
 
 ```sh
-oapi-codegen -generate chi-server -package maelstrom maelstrom.yaml > cmd/maelstrom/internal/maelstrom/maelstrom.gen.go
-oapi-codegen -generate types -package maelstrom maelstrom.yaml > cmd/maelstrom/internal/maelstrom/types.gen.go
+oapi-codegen -generate chi-server -package maelstrom maelstrom.yaml > internal/maelstrom/maelstrom.gen.go
+oapi-codegen -generate types -package maelstrom maelstrom.yaml > internal/maelstrom/types.gen.go
 ```
 
 Mocks are generated with mockgen via `go generate ./...`.

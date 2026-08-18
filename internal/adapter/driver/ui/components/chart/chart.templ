@@ -1,0 +1,10 @@
+package chart
+
+import "github.com/jonny7/maelstrom/internal/application/dto"
+
+templ Chart(runs []dto.Vortex) {
+	<option selected="">Select Test Run</option>
+	for _, r := range runs {
+		<option value={ r.ID }>{ r.ID }</option>
+	}
+}
