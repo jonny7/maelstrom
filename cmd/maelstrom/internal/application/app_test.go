@@ -1,13 +1,13 @@
 package application
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 
 	agentmocks "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent/mocks"
-	k8smocks "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/k8s/mocks"
 )
 
 func setup(t *testing.T) *agentmocks.MockService {
@@ -48,12 +48,37 @@ func TestEndVortex(t *testing.T) {
 	app.EndVortex(u)
 }
 
-func TestScale(t *testing.T) {
-	k := k8smocks.NewMockK8s(gomock.NewController(t))
-	k.EXPECT().Scale(3).Return(0, nil)
+// stubScaler records the replica count it was asked for.
+type stubScaler struct {
+	got int
+	err error
+}
 
-	app := App{k8s: k}
-	if _, err := app.Scale(3); err != nil {
+func (s *stubScaler) Scale(replicas int) error {
+	s.got = replicas
+	return s.err
+}
+
+func TestScale(t *testing.T) {
+	s := &stubScaler{}
+	app := App{scaler: s}
+
+	if err := app.Scale(3); err != nil {
 		t.Errorf("expected no error: %v", err)
+	}
+	if s.got != 3 {
+		t.Errorf("expected scaler to receive 3, got %d", s.got)
+	}
+}
+
+func TestScaleInvalidReplicas(t *testing.T) {
+	s := &stubScaler{got: -99}
+	app := App{scaler: s}
+
+	if err := app.Scale(-1); !errors.Is(err, ErrInvalidReplicas) {
+		t.Errorf("expected ErrInvalidReplicas, got: %v", err)
+	}
+	if s.got != -99 {
+		t.Error("scaler must not be called for invalid input")
 	}
 }

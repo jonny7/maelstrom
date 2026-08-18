@@ -62,7 +62,7 @@ func TestMembership(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return 2 == len(m.joins) &&
 			3 == len(members[0].Members()) &&
-			serf.StatusLeft == members[0].Members()[2].Status &&
+			serf.StatusLeft.String() == members[0].Members()[2].Status &&
 			1 == len(m.leaves)
 	}, 7*time.Second, 250*time.Millisecond)
 

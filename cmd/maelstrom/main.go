@@ -14,13 +14,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/k8s"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/metrics/prometheus"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/process"
 	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/k8s"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 )
 
@@ -62,10 +62,11 @@ func run() error {
 	h := &http.Client{Timeout: 1500 * time.Millisecond}
 
 	// scale through k8s when running in a cluster, otherwise fall back to the fake
-	scaler, err := k8s.New("default")
+	var scaler application.Scaler
+	scaler, err = k8s.New("default")
 	if err != nil {
 		logger.LogWithError(logging.WarningLevel, "k8s unavailable, falling back to fake scaler", err)
-		scaler = k8s.NewFakeK8s()
+		scaler = k8s.NewFake()
 	}
 
 	app, err := application.New(g, proc, h, logger, m, scaler)

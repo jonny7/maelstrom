@@ -2,6 +2,7 @@
 package application
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -13,26 +14,33 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/k8s"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
 )
 
+// Scaler is the driven port for resizing the cluster of Maelstrom nodes.
+type Scaler interface {
+	Scale(replicas int) error
+}
+
+// ErrInvalidReplicas rejects a Scale request for a negative replica count.
+var ErrInvalidReplicas = errors.New("replicas must be zero or greater")
+
 type App struct {
-	agent agent.Service
-	k8s   k8s.K8s
+	agent  agent.Service
+	scaler Scaler
 }
 
 // New wires the core services into an App. All driven ports (generator, processor,
 // client, metrics, scaler) are constructed by the caller.
-func New(generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics, scaler k8s.K8s) (App, error) {
+func New(generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics, scaler Scaler) (App, error) {
 	a, err := agent.New(logger, generator, processor, client, metrics)
 	if err != nil {
 		return App{}, fmt.Errorf("unable to initialize agent: %w", err)
 	}
 
 	return App{
-		agent: a,
-		k8s:   scaler,
+		agent:  a,
+		scaler: scaler,
 	}, nil
 }
 
@@ -57,6 +65,9 @@ func (a App) Vortexes() []commander.Vortex {
 }
 
 // Scale resizes the Maelstrom cluster to the given replica count.
-func (a App) Scale(replicas int) (int, error) {
-	return a.k8s.Scale(replicas)
+func (a App) Scale(replicas int) error {
+	if replicas < 0 {
+		return ErrInvalidReplicas
+	}
+	return a.scaler.Scale(replicas)
 }

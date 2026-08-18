@@ -5,22 +5,21 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/hashicorp/serf/serf"
-
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 )
 
 type Member struct {
 	Name, Port, Addr, Tags, Status string
 }
 
-func MemberDTO(nodes []serf.Member) []Member {
+func MemberDTO(nodes []membership.Member) []Member {
 	var members []Member
 	for _, n := range nodes {
 		members = append(members, Member{
 			Name: n.Name,
-			Port: strconv.Itoa(int(n.Port)),
-			Addr: n.Addr.String(),
+			Port: strconv.Itoa(n.Port),
+			Addr: n.Addr,
 			Tags: func(m map[string]string) string {
 				var out string
 				for k, v := range m {
@@ -28,7 +27,7 @@ func MemberDTO(nodes []serf.Member) []Member {
 				}
 				return out
 			}(n.Tags),
-			Status: n.Status.String(),
+			Status: n.Status,
 		})
 	}
 	return members

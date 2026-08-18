@@ -133,7 +133,7 @@ func (u UI) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = u.app.Scale(v)
+	err = u.app.Scale(v)
 	if err != nil {
 		if re := replicas.ReplicasWithError(len(u.app.Membership()), err.Error()).Render(r.Context(), w); re != nil {
 			w.WriteHeader(http.StatusInternalServerError)

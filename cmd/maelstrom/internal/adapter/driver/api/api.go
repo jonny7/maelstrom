@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -175,10 +176,16 @@ func (s Server) Replicas(w http.ResponseWriter, r *http.Request) {
 		render.Respond(w, r, maelstrom.Status{Message: "unable to decode body"})
 		return
 	}
-	if status, err := s.app.Scale(newScale.Replicas); err != nil {
+	if err := s.app.Scale(newScale.Replicas); err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, application.ErrInvalidReplicas) {
+			status = http.StatusUnprocessableEntity
+		}
 		render.Status(r, status)
-		render.Respond(w, r, maelstrom.Status{Message: err.Error()})
+		render.Respond(w, r, maelstrom.Status{Message: err.Error(), Status: status})
+		return
 	}
 
 	render.Status(r, http.StatusAccepted)
+	render.Respond(w, r, maelstrom.Status{Message: "success", Status: http.StatusAccepted})
 }

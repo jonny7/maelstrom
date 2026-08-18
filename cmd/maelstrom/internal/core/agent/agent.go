@@ -6,7 +6,6 @@ import (
 
 	"github.com/caarlos0/env/v10"
 	"github.com/google/uuid"
-	"github.com/hashicorp/serf/serf"
 	"github.com/soheilhy/cmux"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
@@ -36,7 +35,7 @@ type agent struct {
 //go:generate mockgen -source=agent.go -destination mocks/agent.go -package mocks
 
 type Service interface {
-	Members() []serf.Member
+	Members() []membership.Member
 	Start(host string, jobs, workers int, cbuf, rbuf int)
 	Stop(id uuid.UUID)
 	Vortexes() []commander.Vortex
@@ -52,7 +51,7 @@ func (a *agent) Stop(id uuid.UUID) {
 	a.commander.Stop(id)
 }
 
-func (a *agent) Members() []serf.Member {
+func (a *agent) Members() []membership.Member {
 	return a.membership.Members()
 }
 

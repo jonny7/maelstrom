@@ -9,10 +9,19 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 )
 
-// Member must provide leaving and joining events
-type Member interface {
+// Handler reacts to nodes joining and leaving the cluster
+type Handler interface {
 	Join(name, addr string) error
 	Leave(name string) error
+}
+
+// Member is a node in the Maelstrom cluster.
+type Member struct {
+	Name   string
+	Addr   string
+	Port   int
+	Tags   map[string]string
+	Status string
 }
 
 // Config provides the Node details for each member
@@ -26,10 +35,10 @@ type Config struct {
 // Membership provides additional serf.Serf and serf.Event capabilities
 type Membership struct {
 	Config
-	member Member
-	serf   *serf.Serf
-	events chan serf.Event
-	logger logging.Logger
+	handler Handler
+	serf    *serf.Serf
+	events  chan serf.Event
+	logger  logging.Logger
 }
 
 // newSerf creates the initial serf.Serf configuration for the member
@@ -71,12 +80,12 @@ func (m *Membership) newSerf() error {
 	return nil
 }
 
-// New creates a new Member with the provided Group and Config
-func New(member Member, config Config, baseLogger logging.Logger) (*Membership, error) {
+// New creates a Membership with the provided Handler and Config
+func New(handler Handler, config Config, baseLogger logging.Logger) (*Membership, error) {
 	c := &Membership{
-		Config: config,
-		member: member,
-		logger: baseLogger,
+		Config:  config,
+		handler: handler,
+		logger:  baseLogger,
 	}
 	if err := c.newSerf(); err != nil {
 		return nil, err
@@ -114,8 +123,19 @@ func (m *Membership) eventHandler() {
 }
 
 // Members returns the current member list
-func (m *Membership) Members() []serf.Member {
-	return m.serf.Members()
+func (m *Membership) Members() []Member {
+	serfMembers := m.serf.Members()
+	members := make([]Member, 0, len(serfMembers))
+	for _, sm := range serfMembers {
+		members = append(members, Member{
+			Name:   sm.Name,
+			Addr:   sm.Addr.String(),
+			Port:   int(sm.Port),
+			Tags:   sm.Tags,
+			Status: sm.Status.String(),
+		})
+	}
+	return members
 }
 
 // Leave allows a member to gracefully leave the member list
@@ -130,7 +150,7 @@ func (m *Membership) isLocal(member serf.Member) bool {
 
 // handleJoin attempts to add a member to an existing cluster
 func (m *Membership) handleJoin(member serf.Member) {
-	if err := m.member.Join(
+	if err := m.handler.Join(
 		member.Name,
 		member.Tags["rpc_addr"],
 	); err != nil {
@@ -140,7 +160,7 @@ func (m *Membership) handleJoin(member serf.Member) {
 
 // handleLeave attempts to remove a member from an existing cluster
 func (m *Membership) handleLeave(member serf.Member) {
-	if err := m.member.Leave(
+	if err := m.handler.Leave(
 		member.Name,
 	); err != nil {
 		m.logger.LogWithError(logging.ErrorLevel, "failed to leave cluster", err)
