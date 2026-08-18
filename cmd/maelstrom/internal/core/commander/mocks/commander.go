@@ -13,7 +13,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	maelstrom "github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
+	commander "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -69,10 +69,10 @@ func (mr *MockCommandMockRecorder) Leave(id any) *gomock.Call {
 }
 
 // Start mocks base method.
-func (m *MockCommand) Start(host string, jobs, workers, cbuf, rbuf int) maelstrom.Vortex {
+func (m *MockCommand) Start(host string, jobs, workers, cbuf, rbuf int) commander.Vortex {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Start", host, jobs, workers, cbuf, rbuf)
-	ret0, _ := ret[0].(maelstrom.Vortex)
+	ret0, _ := ret[0].(commander.Vortex)
 	return ret0
 }
 
@@ -95,10 +95,10 @@ func (mr *MockCommandMockRecorder) Stop(id any) *gomock.Call {
 }
 
 // Vortexes mocks base method.
-func (m *MockCommand) Vortexes() []maelstrom.Vortex {
+func (m *MockCommand) Vortexes() []commander.Vortex {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Vortexes")
-	ret0, _ := ret[0].([]maelstrom.Vortex)
+	ret0, _ := ret[0].([]commander.Vortex)
 	return ret0
 }
 

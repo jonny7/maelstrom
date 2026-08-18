@@ -20,6 +20,7 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 )
 
@@ -30,8 +31,33 @@ type Server struct {
 }
 
 func (s Server) Vortexes(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
+	runs := s.app.Vortexes()
+	out := make([]maelstrom.Vortex, 0, len(runs))
+	for _, v := range runs {
+		out = append(out, toAPIVortex(v))
+	}
+	render.Respond(w, r, out)
+}
+
+// toAPIVortex maps a core run onto the generated OpenAPI shape
+func toAPIVortex(v commander.Vortex) maelstrom.Vortex {
+	id := v.ID.String()
+	host := v.Host
+	start := int(v.StartTime.Unix())
+	out := maelstrom.Vortex{
+		Id:             &id,
+		Host:           &host,
+		Jobs:           v.Jobs,
+		Workers:        v.Workers,
+		ConsumerBuffer: v.ConsumerBuffer,
+		ResultBuffer:   v.ResultBuffer,
+		StartTime:      &start,
+	}
+	if v.Finished() {
+		end := int(v.EndTime.Unix())
+		out.EndTime = &end
+	}
+	return out
 }
 
 func (s Server) ScaleReplicas(w http.ResponseWriter, r *http.Request) {

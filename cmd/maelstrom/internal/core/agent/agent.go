@@ -3,7 +3,6 @@ package agent
 import (
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/caarlos0/env/v10"
 	"github.com/google/uuid"
@@ -17,7 +16,6 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/membership"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 )
 
 type agent struct {
@@ -32,7 +30,6 @@ type agent struct {
 	// shutdowns receive channel events, signifying it should be shut down
 	shutdowns chan struct{}
 	//shutdownLock sync.Mutex @todo make this graceful
-	runs   []maelstrom.Vortex
 	logger logging.Logger
 }
 
@@ -42,22 +39,16 @@ type Service interface {
 	Members() []serf.Member
 	Start(host string, jobs, workers int, cbuf, rbuf int)
 	Stop(id uuid.UUID)
-	Vortexes() []maelstrom.Vortex
+	Vortexes() []commander.Vortex
 }
 
 func (a *agent) Start(host string, jobs, workers int, cbuf, rbuf int) {
 	a.logger.Log(logging.DebugLevel, "starting generator and processor")
-	a.runs = append(a.runs, a.commander.Start(host, jobs, workers, cbuf, rbuf))
+	a.commander.Start(host, jobs, workers, cbuf, rbuf)
 }
 
 func (a *agent) Stop(id uuid.UUID) {
 	a.logger.Log(logging.DebugLevel, fmt.Sprintf("stop load test %v was triggered by the user", id))
-	for i, r := range a.runs {
-		if id.String() == *r.Id {
-			now := int(time.Now().Unix())
-			a.runs[i].EndTime = &now
-		}
-	}
 	a.commander.Stop(id)
 }
 
@@ -65,8 +56,8 @@ func (a *agent) Members() []serf.Member {
 	return a.membership.Members()
 }
 
-func (a *agent) Vortexes() []maelstrom.Vortex {
-	return a.runs
+func (a *agent) Vortexes() []commander.Vortex {
+	return a.commander.Vortexes()
 }
 
 // New returns a new agent or errors. The main configuration is provided through environment vars or defaults.

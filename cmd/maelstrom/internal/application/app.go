@@ -9,12 +9,12 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application/dto"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/k8s"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 )
 
 type App struct {
@@ -52,7 +52,7 @@ func (a App) EndVortex(id uuid.UUID) {
 }
 
 // Vortexes returns all tracked load-test runs.
-func (a App) Vortexes() []maelstrom.Vortex {
+func (a App) Vortexes() []commander.Vortex {
 	return a.agent.Vortexes()
 }
 

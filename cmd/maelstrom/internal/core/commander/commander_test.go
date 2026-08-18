@@ -35,18 +35,22 @@ func TestNewCommander(t *testing.T) {
 
 func TestCommanderStop(t *testing.T) {
 	done := make(chan struct{})
+	u := uuid.New()
 	cmdr := Commander{
-		interrupt: make(map[uuid.UUID]vortexWithInterupt),
+		runs: map[uuid.UUID]*run{
+			u: {done: done},
+		},
 	}
 
-	u := uuid.New()
-	cmdr.interrupt[u] = vortexWithInterupt{
-		done: done,
-	}
 	cmdr.Stop(u)
 	if _, ok := <-done; ok {
 		t.Errorf("expected closed channel, but got: %v", done)
 	}
+	if !cmdr.runs[u].vortex.Finished() {
+		t.Error("expected stopped run to be marked finished")
+	}
+	// a second Stop must be a no-op, not a panic on the closed channel
+	cmdr.Stop(u)
 }
 
 func TestCommanderStart(t *testing.T) {
@@ -63,7 +67,17 @@ func TestCommanderStart(t *testing.T) {
 	p.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	cmdr := NewCommander(newConfig(t), c, p, h, l, m)
-	cmdr.Start("http://localhost:8000", 1, 10, 20, 0)
+	v := cmdr.Start("http://localhost:8000", 1, 10, 20, 0)
+
+	if v.ID == uuid.Nil {
+		t.Error("expected run id to be set")
+	}
+	if v.Finished() {
+		t.Error("expected new run to not be finished")
+	}
+	if len(cmdr.Vortexes()) != 1 {
+		t.Errorf("expected 1 tracked run, got %d", len(cmdr.Vortexes()))
+	}
 }
 
 func TestAnalytics(t *testing.T) {

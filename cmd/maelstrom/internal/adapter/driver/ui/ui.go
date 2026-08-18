@@ -28,7 +28,6 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/config"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/views"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 )
 
 type UI struct {
@@ -134,8 +133,7 @@ func (u UI) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scale := maelstrom.Replicas{Replicas: v}
-	_, err = u.app.Scale(scale.Replicas)
+	_, err = u.app.Scale(v)
 	if err != nil {
 		if re := replicas.ReplicasWithError(len(u.app.Membership()), err.Error()).Render(r.Context(), w); re != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -143,7 +141,7 @@ func (u UI) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = replicas.Replicas(scale.Replicas).Render(r.Context(), w); err != nil {
+	if err = replicas.Replicas(v).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
@@ -224,7 +222,7 @@ func (u UI) Health(w http.ResponseWriter, _ *http.Request) {
 func (u UI) chart(w http.ResponseWriter, r *http.Request) {
 	v := u.app.Vortexes()
 	sort.Slice(v, func(i, j int) bool {
-		return *v[i].StartTime > *v[j].StartTime
+		return v[i].StartTime.After(v[j].StartTime)
 	})
 	if err := chart.Chart(dto.VortexToDTO(v)).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

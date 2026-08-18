@@ -11,13 +11,11 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mocklogger "github.com/jonny7/maelstrom/cmd/maelstrom/common/logging/mocks"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander"
 	mockgenerator "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator/mocks"
 	mock "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/mocks"
 	mockprocessor "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor/mocks"
 	mocksender "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender/mocks"
 	mockmetrics "github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics/mocks"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 )
 
 func TestRPCAddrErr(t *testing.T) {
@@ -92,13 +90,11 @@ func TestAgentStop(t *testing.T) {
 	cmdr := mock.NewMockCommand(ctrl)
 	l := mocklogger.NewMockLogger(ctrl)
 	l.EXPECT().Log(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	runs := make([]maelstrom.Vortex, 0)
-	runs = append(runs, maelstrom.Vortex{Id: commander.ToString(uuid.NewString())})
 	a := agent{
 		commander: cmdr,
-		runs:      runs,
 		logger:    l,
 	}
-	cmdr.EXPECT().Stop(gomock.Any())
-	a.Stop(uuid.MustParse(*runs[0].Id))
+	u := uuid.New()
+	cmdr.EXPECT().Stop(u)
+	a.Stop(u)
 }
