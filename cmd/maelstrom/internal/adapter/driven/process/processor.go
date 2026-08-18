@@ -38,8 +38,13 @@ func (r RequestProcessor) Process(done chan struct{}, work <-chan requester.Even
 					r.logger.Log(logging.ErrorLevel, "req==nil")
 					continue
 				}
-				ch <- req
-				r.metrics.Processed()
+				select {
+				case ch <- req:
+					r.metrics.Processed()
+				case <-done:
+					r.logger.Log(logging.InfoLevel, "closing custom processor")
+					return
+				}
 			case <-done:
 				r.logger.Log(logging.InfoLevel, "closing custom processor")
 				return

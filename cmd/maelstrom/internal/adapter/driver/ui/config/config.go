@@ -9,6 +9,10 @@ import (
 type Config struct {
 	Port int    `env:"PORT" envDefault:"4000"`
 	Host string `env:"HOST" envDefault:"0.0.0.0"`
+	// PrometheusAddr is where the UI reads chart metrics from
+	PrometheusAddr string `env:"PROMETHEUS_ADDR" envDefault:"http://localhost:9090"`
+	PrometheusUser string `env:"PROMETHEUS_USER" envDefault:"admin"`
+	PrometheusPass string `env:"PROMETHEUS_PASS" envDefault:"admin"`
 }
 
 func New() (*Config, error) {

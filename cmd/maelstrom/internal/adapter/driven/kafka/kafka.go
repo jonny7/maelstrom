@@ -53,8 +53,7 @@ func (k Kafka) Start(done <-chan struct{}, buffer int) chan requester.Event {
 		for {
 			select {
 			case record := <-records:
-				k.metrics.Consumed()
-				ch <- requester.Event{
+				event := requester.Event{
 					Key:   record.Key,
 					Value: record.Value,
 					Headers: func(record *kgo.Record) []requester.Header {
@@ -68,6 +67,13 @@ func (k Kafka) Start(done <-chan struct{}, buffer int) chan requester.Event {
 						return headers
 					}(record),
 					Timestamp: record.Timestamp,
+				}
+				select {
+				case ch <- event:
+					k.metrics.Consumed()
+				case <-done:
+					k.logger.Log(logging.InfoLevel, "exiting kafka consumer")
+					return
 				}
 			case <-done:
 				k.logger.Log(logging.InfoLevel, "exiting kafka consumer")
@@ -99,7 +105,12 @@ func (k Kafka) consume(done <-chan struct{}) chan *kgo.Record {
 				if !iter.Done() {
 					record := iter.Next()
 					k.logger.Log(logging.DebugLevel, "received message from iterator")
-					ch <- record
+					select {
+					case ch <- record:
+					case <-done:
+						k.logger.Log(logging.InfoLevel, "closing client consumer")
+						return
+					}
 				}
 				if err := k.client.CommitUncommittedOffsets(context.Background()); err != nil {
 					k.logger.LogWithError(logging.ErrorLevel, "failed to commit offsets", err)

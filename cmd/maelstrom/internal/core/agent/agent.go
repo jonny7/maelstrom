@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/caarlos0/env/v10"
 	"github.com/google/uuid"
 	"github.com/soheilhy/cmux"
 
@@ -26,10 +25,7 @@ type agent struct {
 	mux cmux.CMux
 	// membership configures Serf and eventing
 	membership *membership.Membership
-	// shutdowns receive channel events, signifying it should be shut down
-	shutdowns chan struct{}
-	//shutdownLock sync.Mutex @todo make this graceful
-	logger logging.Logger
+	logger     logging.Logger
 }
 
 //go:generate mockgen -source=agent.go -destination mocks/agent.go -package mocks
@@ -59,23 +55,17 @@ func (a *agent) Vortexes() []commander.Vortex {
 	return a.commander.Vortexes()
 }
 
-// New returns a new agent or errors. The main configuration is provided through environment vars or defaults.
+// New returns a new agent or errors. Configuration is provided by the caller.
 // The agent will also set up all membership for the Serf cluster
-func New(logger logging.Logger, generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, metrics metrics.Metrics) (Service, error) {
-	var cfg Config
-	if err := env.Parse(&cfg); err != nil {
-		return nil, err
-	}
-
+func New(cfg Config, logger logging.Logger, generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, metrics metrics.Metrics) (Service, error) {
 	// create agent
 	a := &agent{
-		config:    cfg,
-		shutdowns: make(chan struct{}),
-		logger:    logger,
+		config: cfg,
+		logger: logger,
 	}
 
 	// create commander
-	a.commander = commander.NewCommander(cfg.Commander, generator, processor, client, logger, metrics)
+	a.commander = commander.NewCommander(generator, processor, client, logger, metrics)
 
 	// setup mux or err
 	if err := a.setupMux(); err != nil {

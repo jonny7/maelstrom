@@ -30,10 +30,10 @@ type App struct {
 	scaler Scaler
 }
 
-// New wires the core services into an App. All driven ports (generator, processor,
-// client, metrics, scaler) are constructed by the caller.
-func New(generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics, scaler Scaler) (App, error) {
-	a, err := agent.New(logger, generator, processor, client, metrics)
+// New wires the core services into an App. Configuration and all driven ports
+// (generator, processor, client, metrics, scaler) are constructed by the caller.
+func New(cfg agent.Config, generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics, scaler Scaler) (App, error) {
+	a, err := agent.New(cfg, logger, generator, processor, client, metrics)
 	if err != nil {
 		return App{}, fmt.Errorf("unable to initialize agent: %w", err)
 	}

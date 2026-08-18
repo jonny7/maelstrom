@@ -16,8 +16,7 @@ func (f Fake) Start(done <-chan struct{}, buffer int) chan requester.Event {
 			select {
 			case <-done:
 				return
-			default:
-				ch <- requester.Event{}
+			case ch <- requester.Event{}:
 				f.metrics.Consumed()
 			}
 		}

@@ -48,10 +48,9 @@ func New(app application.App) UI {
 		log.Fatal(err)
 	}
 
-	// @todo make configurable
 	c, err := api.NewClient(api.Config{
-		Address:      "http://localhost:9090",
-		RoundTripper: promcfg.NewBasicAuthRoundTripper("admin", "admin", "", "", api.DefaultRoundTripper),
+		Address:      cfg.PrometheusAddr,
+		RoundTripper: promcfg.NewBasicAuthRoundTripper(cfg.PrometheusUser, promcfg.Secret(cfg.PrometheusPass), "", "", api.DefaultRoundTripper),
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -68,7 +67,7 @@ func New(app application.App) UI {
 	return srv
 }
 
-func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi.Router) http.Handler) {
+func (u UI) Run(done chan struct{}, errs chan error) {
 	// create router
 	mux := chi.NewRouter()
 	mux.Use(middleware.Recoverer)
@@ -77,7 +76,7 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 
 	srv := http.Server{
 		Addr:    net.JoinHostPort(u.cfg.Host, strconv.Itoa(u.cfg.Port)),
-		Handler: mountRouter(mux),
+		Handler: mux,
 	}
 
 	go func() {
@@ -96,6 +95,13 @@ func (u UI) Run(done chan struct{}, errs chan error, mountRouter func(router chi
 
 func (u UI) setupRoutes(router *chi.Mux) {
 	router.Get("/", u.index)
+	router.Get("/healthz", u.health)
+	router.Get("/nodes", u.nodes)
+	router.Get("/replicas", u.replicas)
+	router.Put("/replicas", u.scaleReplicas)
+	router.Get("/vortex", u.vortexes)
+	router.Post("/vortex", u.startVortex)
+	router.Delete("/vortex/{id}", u.endVortex)
 	router.Get("/vortex-form", u.vortexForm)
 	router.Get("/new-vortex", u.newVortex)
 	router.Get("/chart", u.chart)
@@ -107,7 +113,7 @@ func (u UI) index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u UI) Nodes(w http.ResponseWriter, r *http.Request) {
+func (u UI) nodes(w http.ResponseWriter, r *http.Request) {
 	members := u.app.Membership()
 	sort.Slice(members, func(i, j int) bool {
 		return members[i].Name < members[j].Name
@@ -117,14 +123,14 @@ func (u UI) Nodes(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u UI) Replicas(w http.ResponseWriter, r *http.Request) {
+func (u UI) replicas(w http.ResponseWriter, r *http.Request) {
 	members := u.app.Membership()
 	if err := replicas.Replicas(len(members)).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func (u UI) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
+func (u UI) scaleReplicas(w http.ResponseWriter, r *http.Request) {
 	v, err := strconv.Atoi(r.FormValue("replicas"))
 	if err != nil {
 		if re := replicas.ReplicasWithError(len(u.app.Membership()), "unable to parse input").Render(r.Context(), w); re != nil {
@@ -146,19 +152,14 @@ func (u UI) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u UI) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u UI) Vortexes(w http.ResponseWriter, r *http.Request) {
+func (u UI) vortexes(w http.ResponseWriter, r *http.Request) {
 	runs := u.app.Vortexes()
 	if err := vortex.Run(dto.VortexToDTO(runs)).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
-func (u UI) StartVortex(w http.ResponseWriter, r *http.Request) {
+func (u UI) startVortex(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(400)
 		return
@@ -192,8 +193,8 @@ func (u UI) StartVortex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u UI) EndVortex(w http.ResponseWriter, _ *http.Request, id string) {
-	validatedUUID, err := uuid.Parse(id)
+func (u UI) endVortex(w http.ResponseWriter, r *http.Request) {
+	validatedUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		w.WriteHeader(400)
 		// @todo
@@ -215,7 +216,7 @@ func (u UI) newVortex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u UI) Health(w http.ResponseWriter, _ *http.Request) {
+func (u UI) health(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(204)
 }
 

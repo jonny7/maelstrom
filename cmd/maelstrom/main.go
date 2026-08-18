@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/caarlos0/env/v10"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -21,6 +22,7 @@ import (
 	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 )
 
@@ -63,13 +65,18 @@ func run() error {
 
 	// scale through k8s when running in a cluster, otherwise fall back to the fake
 	var scaler application.Scaler
-	scaler, err = k8s.New("default")
+	scaler, err = k8s.New()
 	if err != nil {
 		logger.LogWithError(logging.WarningLevel, "k8s unavailable, falling back to fake scaler", err)
 		scaler = k8s.NewFake()
 	}
 
-	app, err := application.New(g, proc, h, logger, m, scaler)
+	var agentCfg agent.Config
+	if err = env.Parse(&agentCfg); err != nil {
+		return fmt.Errorf("agent config failed to load: %w", err)
+	}
+
+	app, err := application.New(agentCfg, g, proc, h, logger, m, scaler)
 	if err != nil {
 		return err
 	}
@@ -89,9 +96,7 @@ func run() error {
 
 	// @todo headless
 	ui := u.New(app)
-	ui.Run(done, errs, func(router chi.Router) http.Handler {
-		return maelstrom.HandlerFromMux(ui, router)
-	})
+	ui.Run(done, errs)
 
 	for {
 		select {

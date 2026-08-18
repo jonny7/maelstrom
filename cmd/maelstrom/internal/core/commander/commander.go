@@ -34,7 +34,6 @@ func (v Vortex) Finished() bool {
 }
 
 type Commander struct {
-	config    Config
 	generator generator.Generator
 	processor processor.Processor
 	client    sender.HTTPDoer
@@ -104,12 +103,12 @@ func (c *Commander) Start(host string, jobs, workers, cbuf, rbuf int) Vortex {
 	c.runs[v.ID] = &run{vortex: v, done: done}
 	c.mu.Unlock()
 
-	for j := 0; j < jobs; j++ {
+	for range jobs {
 		work := c.generator.Start(done, cbuf)
 		load := c.processor.Process(done, work, host, cbuf)
 
 		results := make([]<-chan result, workers)
-		for w := 0; w < workers; w++ {
+		for w := range workers {
 			results[w] = c.vortexer(done, load, rbuf)
 		}
 
@@ -127,7 +126,7 @@ func merge(done chan struct{}, channels ...<-chan result) chan result {
 		for r := range c {
 			select {
 			case <-done:
-				break
+				return
 			case ch <- r:
 			}
 		}
@@ -198,9 +197,10 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request, buffer
 					c.logger.LogWithError(logging.ErrorLevel, "vortex request failed", err)
 				}
 
-				ch <- result{
-					err:      err,
-					response: response,
+				select {
+				case ch <- result{err: err, response: response}:
+				case <-done:
+					return
 				}
 			}
 		}
@@ -208,9 +208,8 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request, buffer
 	return ch
 }
 
-func NewCommander(cfg Config, generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) *Commander {
+func NewCommander(generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) *Commander {
 	return &Commander{
-		config:    cfg,
 		generator: generator,
 		processor: processor,
 		client:    client,
