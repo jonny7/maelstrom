@@ -12,7 +12,7 @@ import "bytes"
 
 import (
 	"fmt"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application/dto"
 )
 
 func status(status string) templ.Component {

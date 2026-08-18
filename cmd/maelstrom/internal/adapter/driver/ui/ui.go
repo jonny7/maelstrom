@@ -19,7 +19,7 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/nodes"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/replicas"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui/components/vortex"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application/dto"
 
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -109,7 +109,7 @@ func (u UI) index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u UI) Nodes(w http.ResponseWriter, r *http.Request) {
-	members := u.app.Agent.Membership()
+	members := u.app.Membership()
 	sort.Slice(members, func(i, j int) bool {
 		return members[i].Name < members[j].Name
 	})
@@ -119,7 +119,7 @@ func (u UI) Nodes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u UI) Replicas(w http.ResponseWriter, r *http.Request) {
-	members := u.app.Agent.Membership()
+	members := u.app.Membership()
 	if err := replicas.Replicas(len(members)).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -128,16 +128,16 @@ func (u UI) Replicas(w http.ResponseWriter, r *http.Request) {
 func (u UI) ScaleReplicas(w http.ResponseWriter, r *http.Request) {
 	v, err := strconv.Atoi(r.FormValue("replicas"))
 	if err != nil {
-		if re := replicas.ReplicasWithError(len(u.app.Agent.Membership()), "unable to parse input").Render(r.Context(), w); re != nil {
+		if re := replicas.ReplicasWithError(len(u.app.Membership()), "unable to parse input").Render(r.Context(), w); re != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
 	}
 
 	scale := maelstrom.Replicas{Replicas: v}
-	_, err = u.app.K8s.Scale(scale.Replicas)
+	_, err = u.app.Scale(scale.Replicas)
 	if err != nil {
-		if re := replicas.ReplicasWithError(len(u.app.Agent.Membership()), err.Error()).Render(r.Context(), w); re != nil {
+		if re := replicas.ReplicasWithError(len(u.app.Membership()), err.Error()).Render(r.Context(), w); re != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -154,7 +154,7 @@ func (u UI) FindNodeByID(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func (u UI) Vortexes(w http.ResponseWriter, r *http.Request) {
-	runs := u.app.Agent.Vortexes()
+	runs := u.app.Vortexes()
 	if err := vortex.Run(dto.VortexToDTO(runs)).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -187,7 +187,7 @@ func (u UI) StartVortex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.app.Agent.StartVortex(r.FormValue("url"), int(jobs), int(workers), int(cbuf), int(rbuf))
+	u.app.StartVortex(r.FormValue("url"), int(jobs), int(workers), int(cbuf), int(rbuf))
 	w.Header().Add("HX-Trigger", "updateChartSelectOption")
 	if e := vortex.Form().Render(r.Context(), w); e != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -201,7 +201,7 @@ func (u UI) EndVortex(w http.ResponseWriter, _ *http.Request, id string) {
 		// @todo
 		return
 	}
-	u.app.Agent.EndVortex(validatedUUID)
+	u.app.EndVortex(validatedUUID)
 	w.WriteHeader(202)
 }
 
@@ -222,7 +222,7 @@ func (u UI) Health(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (u UI) chart(w http.ResponseWriter, r *http.Request) {
-	v := u.app.Agent.Vortexes()
+	v := u.app.Vortexes()
 	sort.Slice(v, func(i, j int) bool {
 		return *v[i].StartTime > *v[j].StartTime
 	})

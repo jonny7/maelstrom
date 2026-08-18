@@ -51,7 +51,7 @@ func (s Server) EndVortex(w http.ResponseWriter, r *http.Request, id string) {
 		// @todo
 		return
 	}
-	s.app.Agent.EndVortex(validatedUUID)
+	s.app.EndVortex(validatedUUID)
 	render.Respond(w, r, maelstrom.Status{
 		Message: "success",
 		Status:  http.StatusOK,
@@ -82,7 +82,7 @@ func (s Server) StartVortex(w http.ResponseWriter, r *http.Request) {
 		render.Status(r, 400)
 		render.Respond(w, r, fmt.Sprintf("the provided host was unable to be parsed: %s", *vortex.Host))
 	}
-	s.app.Agent.StartVortex(*vortex.Host, vortex.Jobs, vortex.Workers, vortex.ConsumerBuffer, vortex.ResultBuffer)
+	s.app.StartVortex(*vortex.Host, vortex.Jobs, vortex.Workers, vortex.ConsumerBuffer, vortex.ResultBuffer)
 	render.Respond(w, r, maelstrom.Status{
 		Message: "success",
 		Status:  http.StatusOK,
@@ -138,7 +138,7 @@ func (s Server) Health(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s Server) Nodes(w http.ResponseWriter, r *http.Request) {
-	members := s.app.Agent.Membership()
+	members := s.app.Membership()
 	render.Respond(w, r, members)
 }
 
@@ -149,7 +149,7 @@ func (s Server) Replicas(w http.ResponseWriter, r *http.Request) {
 		render.Respond(w, r, maelstrom.Status{Message: "unable to decode body"})
 		return
 	}
-	if status, err := s.app.K8s.Scale(newScale.Replicas); err != nil {
+	if status, err := s.app.Scale(newScale.Replicas); err != nil {
 		render.Status(r, status)
 		render.Respond(w, r, maelstrom.Status{Message: err.Error()})
 	}

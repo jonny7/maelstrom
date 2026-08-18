@@ -10,7 +10,7 @@ import "context"
 import "io"
 import "bytes"
 
-import "github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent/dto"
+import "github.com/jonny7/maelstrom/cmd/maelstrom/internal/application/dto"
 import "fmt"
 
 func Run(runs []dto.Vortex) templ.Component {

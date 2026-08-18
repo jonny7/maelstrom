@@ -1,38 +1,62 @@
+// Package application is the application layer
 package application
 
 import (
+	"fmt"
+
+	"github.com/google/uuid"
+
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application/dto"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/agent"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/processor"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/sender"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/k8s"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/metrics"
-	svc "github.com/jonny7/maelstrom/cmd/maelstrom/internal/service/agent"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
 )
 
 type App struct {
-	Logger logging.Logger
-	Agent  svc.Service
-	K8s    k8s.K8s
+	agent agent.Service
+	k8s   k8s.K8s
 }
 
-func New(generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics) App {
+// New wires the core services into an App. All driven ports (generator, processor,
+// client, metrics, scaler) are constructed by the caller.
+func New(generator generator.Generator, processor processor.Processor, client sender.HTTPDoer, logger logging.Logger, metrics metrics.Metrics, scaler k8s.K8s) (App, error) {
 	a, err := agent.New(logger, generator, processor, client, metrics)
 	if err != nil {
-		logger.LogWithError(logging.ErrorLevel, "unable to initialize agent", err)
-	}
-
-	// @todo add disable flag k8s for running locally
-	// do better org here
-	k, e := k8s.New("default")
-	if e != nil {
-		logger.LogWithError(logging.ErrorLevel, "failed to initialize k8s", e)
+		return App{}, fmt.Errorf("unable to initialize agent: %w", err)
 	}
 
 	return App{
-		Logger: logger,
-		Agent:  svc.NewAgentService(a),
-		K8s:    k, //k8s.NewFakeK8s(),
-	}
+		agent: a,
+		k8s:   scaler,
+	}, nil
+}
+
+// Membership returns the current cluster members.
+func (a App) Membership() []dto.Member {
+	return dto.MemberDTO(a.agent.Members())
+}
+
+// StartVortex begins a new load-test run.
+func (a App) StartVortex(host string, jobs, workers, cbuf, rbuf int) {
+	a.agent.Start(host, jobs, workers, cbuf, rbuf)
+}
+
+// EndVortex stops the load-test run with the given id.
+func (a App) EndVortex(id uuid.UUID) {
+	a.agent.Stop(id)
+}
+
+// Vortexes returns all tracked load-test runs.
+func (a App) Vortexes() []maelstrom.Vortex {
+	return a.agent.Vortexes()
+}
+
+// Scale resizes the Maelstrom cluster to the given replica count.
+func (a App) Scale(replicas int) (int, error) {
+	return a.k8s.Scale(replicas)
 }

@@ -19,8 +19,9 @@ import (
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/process"
 	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
 	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/application"
+	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/k8s"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
 )
 
 func main() {
@@ -60,7 +61,17 @@ func run() error {
 	// @todo extend config vars
 	h := &http.Client{Timeout: 1500 * time.Millisecond}
 
-	app := service.NewApplication(g, proc, h, logger, m)
+	// scale through k8s when running in a cluster, otherwise fall back to the fake
+	scaler, err := k8s.New("default")
+	if err != nil {
+		logger.LogWithError(logging.WarningLevel, "k8s unavailable, falling back to fake scaler", err)
+		scaler = k8s.NewFakeK8s()
+	}
+
+	app, err := application.New(g, proc, h, logger, m, scaler)
+	if err != nil {
+		return err
+	}
 
 	api := a.New(app)
 
