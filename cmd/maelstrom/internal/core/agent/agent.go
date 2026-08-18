@@ -8,7 +8,6 @@ import (
 	"github.com/caarlos0/env/v10"
 	"github.com/google/uuid"
 	"github.com/hashicorp/serf/serf"
-	"github.com/rs/zerolog/log"
 	"github.com/soheilhy/cmux"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
@@ -24,7 +23,7 @@ import (
 type agent struct {
 	// Config is the agents configuration
 	config Config
-	// Commander is a raft based set of changes to apply across the Maelstrom nodes
+	// commander runs and tracks load-test vortexes across the Maelstrom nodes
 	commander commander.Command
 	// mux helps serve UDP & TCP over the same port
 	mux cmux.CMux
@@ -33,7 +32,8 @@ type agent struct {
 	// shutdowns receive channel events, signifying it should be shut down
 	shutdowns chan struct{}
 	//shutdownLock sync.Mutex @todo make this graceful
-	runs []maelstrom.Vortex
+	runs   []maelstrom.Vortex
+	logger logging.Logger
 }
 
 //go:generate mockgen -source=agent.go -destination mocks/agent.go -package mocks
@@ -46,12 +46,12 @@ type Service interface {
 }
 
 func (a *agent) Start(host string, jobs, workers int, cbuf, rbuf int) {
-	log.Debug().Msg("starting consumer and processor")
+	a.logger.Log(logging.DebugLevel, "starting generator and processor")
 	a.runs = append(a.runs, a.commander.Start(host, jobs, workers, cbuf, rbuf))
 }
 
 func (a *agent) Stop(id uuid.UUID) {
-	log.Debug().Msgf("stop load %v test was triggered by the user", id)
+	a.logger.Log(logging.DebugLevel, fmt.Sprintf("stop load test %v was triggered by the user", id))
 	for i, r := range a.runs {
 		if id.String() == *r.Id {
 			now := int(time.Now().Unix())
@@ -81,6 +81,7 @@ func New(logger logging.Logger, generator generator.Generator, processor process
 	a := &agent{
 		config:    cfg,
 		shutdowns: make(chan struct{}),
+		logger:    logger,
 	}
 
 	// create commander
@@ -126,7 +127,7 @@ func (a *agent) setupMembership(logger logging.Logger) error {
 // serve serves multiplexed TCP and UDP protocols across a single port
 func (a *agent) serve() error {
 	if err := a.mux.Serve(); err != nil {
-		log.Error().Err(err).Msg("serf is shutting down")
+		a.logger.LogWithError(logging.ErrorLevel, "serf is shutting down", err)
 		return err
 	}
 	return nil

@@ -44,6 +44,8 @@ func TestMembership(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	log := mocks.NewMockLogger(ctrl)
+	log.EXPECT().Log(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	log.EXPECT().LogWithError(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	members, m := setupMembership(t, nil, log)
 	members, _ = setupMembership(t, members, log)

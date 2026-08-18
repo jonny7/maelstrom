@@ -37,8 +37,10 @@ func TestAgent(t *testing.T) {
 	h := mocksender.NewMockHTTPDoer(ctrl)
 	m := mockmetrics.NewMockMetrics(ctrl)
 	l := mocklogger.NewMockLogger(ctrl)
+	l.EXPECT().Log(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	l.EXPECT().LogWithError(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		ports := dynaport.Get(2)
 
 		if err := os.Setenv("SERF_PORT", strconv.Itoa(ports[0])); err != nil {
@@ -73,8 +75,11 @@ func TestAgentStart(t *testing.T) {
 	defer ctrl.Finish()
 
 	cmdr := mock.NewMockCommand(ctrl)
+	l := mocklogger.NewMockLogger(ctrl)
+	l.EXPECT().Log(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	a := agent{
 		commander: cmdr,
+		logger:    l,
 	}
 	cmdr.EXPECT().Start(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 	a.Start("", 1, 1, 0, 0)
@@ -85,11 +90,14 @@ func TestAgentStop(t *testing.T) {
 	defer ctrl.Finish()
 
 	cmdr := mock.NewMockCommand(ctrl)
+	l := mocklogger.NewMockLogger(ctrl)
+	l.EXPECT().Log(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	runs := make([]maelstrom.Vortex, 0)
 	runs = append(runs, maelstrom.Vortex{Id: commander.ToString(uuid.NewString())})
 	a := agent{
 		commander: cmdr,
 		runs:      runs,
+		logger:    l,
 	}
 	cmdr.EXPECT().Stop(gomock.Any())
 	a.Stop(uuid.MustParse(*runs[0].Id))

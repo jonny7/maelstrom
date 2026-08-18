@@ -1,7 +1,6 @@
 package membership
 
 import (
-	"log"
 	"net"
 	"time"
 
@@ -88,7 +87,7 @@ func New(member Member, config Config, baseLogger logging.Logger) (*Membership, 
 // eventHandler processes all serf events for a node.
 func (m *Membership) eventHandler() {
 	for e := range m.events {
-		log.Println(e.EventType().String())
+		m.logger.Log(logging.DebugLevel, "serf event received", logging.KV{Key: "event_type", Value: e.EventType().String()})
 		switch e.EventType() {
 		case serf.EventMemberJoin:
 			for _, member := range e.(serf.MemberEvent).Members {

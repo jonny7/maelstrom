@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
 
 	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
 	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/core/commander/generator"
@@ -18,8 +17,7 @@ import (
 )
 
 type Commander struct {
-	config Config
-	//raft      *raft.Raft
+	config    Config
 	generator generator.Generator
 	processor processor.Processor
 	client    sender.HTTPDoer
@@ -147,12 +145,12 @@ func (c *Commander) analytics(done chan struct{}, results chan result) {
 	}()
 }
 
-// Leave returns the attempted raft removal of the node
+// Leave removes the named node from the cluster. No-op until cluster-wide coordination is implemented.
 func (c *Commander) Leave(id string) error {
-	return nil //c.raft.RemoveServer(raft.ServerID(id), 0, 0).Error()
+	return nil
 }
 
-// Join returns the attempt to add a new voter to the cluster
+// Join adds the named node to the cluster. No-op until cluster-wide coordination is implemented.
 func (c *Commander) Join(id, addr string) error {
 	return nil
 }
@@ -182,7 +180,7 @@ func (c *Commander) vortexer(done chan struct{}, work chan *http.Request, buffer
 
 				response, err := c.client.Do(request)
 				if err != nil {
-					log.Error().Err(err).Send()
+					c.logger.LogWithError(logging.ErrorLevel, "vortex request failed", err)
 				}
 
 				ch <- result{
@@ -207,13 +205,3 @@ func NewCommander(cfg Config, generator generator.Generator, processor processor
 
 	return &cmdr
 }
-
-// @todo do later
-//func newRaft() {
-//	cfg := raft.DefaultConfig()
-//	fmt.Print(cfg)
-//	_, err := boltdb.New(boltdb.Options{})
-//	if err != nil {
-//		return
-//	}
-//}
