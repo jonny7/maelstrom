@@ -23,8 +23,6 @@ spec:
               path: /api/healthz
               port: 3000
           ports:
-            - containerPort: 7373
-              name: rpc
             - containerPort: 7946
               name: serf
             - containerPort: 3000

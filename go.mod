@@ -15,7 +15,6 @@ require (
 	github.com/prometheus/common v0.45.0
 	github.com/rs/zerolog v1.31.0
 	github.com/rzajac/zltest v0.12.0
-	github.com/soheilhy/cmux v0.1.5
 	github.com/stretchr/testify v1.8.4
 	github.com/travisjeffery/go-dynaport v1.0.0
 	github.com/twmb/franz-go v1.15.4

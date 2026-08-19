@@ -9,9 +9,6 @@ spec:
     app: maelstrom
   publishNotReadyAddresses: true
   ports:
-    - name: rpc
-      port: 7373
-      targetPort: 7373
     - name: serf-tcp
       protocol: TCP
       port: 7946

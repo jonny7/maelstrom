@@ -17,10 +17,10 @@ import (
 	"github.com/jonny7/maelstrom/internal/adapter/driven/kafka"
 	"github.com/jonny7/maelstrom/internal/adapter/driven/metrics/prometheus"
 	"github.com/jonny7/maelstrom/internal/adapter/driven/process"
+	"github.com/jonny7/maelstrom/internal/adapter/driven/serf"
 	a "github.com/jonny7/maelstrom/internal/adapter/driver/api"
 	u "github.com/jonny7/maelstrom/internal/adapter/driver/ui"
 	"github.com/jonny7/maelstrom/internal/application"
-	"github.com/jonny7/maelstrom/internal/core/agent"
 	"github.com/jonny7/maelstrom/internal/logging"
 	"github.com/jonny7/maelstrom/internal/maelstrom"
 )
@@ -70,15 +70,17 @@ func run() error {
 		scaler = k8s.NewFake()
 	}
 
-	var agentCfg agent.Config
-	if err = env.Parse(&agentCfg); err != nil {
-		return fmt.Errorf("agent config failed to load: %w", err)
+	var serfCfg serf.Config
+	if err = env.Parse(&serfCfg); err != nil {
+		return fmt.Errorf("serf config failed to load: %w", err)
 	}
 
-	app, err := application.New(agentCfg, g, proc, h, logger, m, scaler)
+	membership, err := serf.New(serfCfg)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to join cluster: %w", err)
 	}
+
+	app := application.New(g, proc, h, logger, m, scaler, membership)
 
 	api := a.New(app)
 

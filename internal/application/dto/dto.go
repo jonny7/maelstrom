@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jonny7/maelstrom/internal/core/agent"
 	"github.com/jonny7/maelstrom/internal/core/commander"
-	"github.com/jonny7/maelstrom/internal/core/membership"
 )
 
 type Member struct {
 	Name, Port, Addr, Tags, Status string
 }
 
-func MemberDTO(nodes []membership.Member) []Member {
+func MemberDTO(nodes []agent.Member) []Member {
 	var members []Member
 	for _, n := range nodes {
 		members = append(members, Member{

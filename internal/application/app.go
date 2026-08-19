@@ -3,7 +3,6 @@ package application
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 
@@ -27,18 +26,13 @@ type App struct {
 	scaler Scaler
 }
 
-// New wires the core services into an App. Configuration and all driven ports
-// (generator, processor, client, metrics, scaler) are constructed by the caller.
-func New(cfg agent.Config, generator commander.Generator, processor commander.Processor, client commander.HTTPDoer, logger logging.Logger, metrics metrics.Metrics, scaler Scaler) (App, error) {
-	a, err := agent.New(cfg, logger, generator, processor, client, metrics)
-	if err != nil {
-		return App{}, fmt.Errorf("unable to initialize agent: %w", err)
-	}
-
+// New wires the core services into an App. All driven ports (generator,
+// processor, client, metrics, scaler, membership) are constructed by the caller.
+func New(generator commander.Generator, processor commander.Processor, client commander.HTTPDoer, logger logging.Logger, metrics metrics.Metrics, scaler Scaler, membership agent.Membership) App {
 	return App{
-		agent:  a,
+		agent:  agent.New(logger, generator, processor, client, metrics, membership),
 		scaler: scaler,
-	}, nil
+	}
 }
 
 // Membership returns the current cluster members.
