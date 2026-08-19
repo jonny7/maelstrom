@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,17 +9,20 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/caarlos0/env/v10"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/jonny7/maelstrom/cmd/maelstrom/common/logging"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/kafka"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/metrics/prometheus"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driven/process"
-	a "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/api"
-	u "github.com/jonny7/maelstrom/cmd/maelstrom/internal/adapter/driver/ui"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/maelstrom"
-	"github.com/jonny7/maelstrom/cmd/maelstrom/internal/service"
+	"github.com/jonny7/maelstrom/internal/adapter/driven/k8s"
+	"github.com/jonny7/maelstrom/internal/adapter/driven/kafka"
+	"github.com/jonny7/maelstrom/internal/adapter/driven/metrics/prometheus"
+	"github.com/jonny7/maelstrom/internal/adapter/driven/process"
+	a "github.com/jonny7/maelstrom/internal/adapter/driver/api"
+	u "github.com/jonny7/maelstrom/internal/adapter/driver/ui"
+	"github.com/jonny7/maelstrom/internal/application"
+	"github.com/jonny7/maelstrom/internal/core/agent"
+	"github.com/jonny7/maelstrom/internal/logging"
+	"github.com/jonny7/maelstrom/internal/maelstrom"
 )
 
 func main() {
@@ -60,7 +62,23 @@ func run() error {
 	// @todo extend config vars
 	h := &http.Client{Timeout: 1500 * time.Millisecond}
 
-	app := service.NewApplication(g, proc, h, logger, m)
+	// scale through k8s when running in a cluster, otherwise fall back to the fake
+	var scaler application.Scaler
+	scaler, err = k8s.New()
+	if err != nil {
+		logger.LogWithError(logging.WarningLevel, "k8s unavailable, falling back to fake scaler", err)
+		scaler = k8s.NewFake()
+	}
+
+	var agentCfg agent.Config
+	if err = env.Parse(&agentCfg); err != nil {
+		return fmt.Errorf("agent config failed to load: %w", err)
+	}
+
+	app, err := application.New(agentCfg, g, proc, h, logger, m, scaler)
+	if err != nil {
+		return err
+	}
 
 	api := a.New(app)
 
@@ -77,14 +95,16 @@ func run() error {
 
 	// @todo headless
 	ui := u.New(app)
-	ui.Run(done, errs, func(router chi.Router) http.Handler {
-		return maelstrom.HandlerFromMux(ui, router)
-	})
+	ui.Run(done, errs)
 
 	for {
 		select {
 		case msg := <-sig:
 			logger.Log(logging.InfoLevel, fmt.Sprintf("shutting down from signal: %v", msg))
+			// tell the cluster we're leaving so peers mark us left instead of failed
+			if err = app.Leave(); err != nil {
+				logger.LogWithError(logging.ErrorLevel, "failed to leave cluster gracefully", err)
+			}
 			close(done)
 			return nil
 		case err = <-errs:
