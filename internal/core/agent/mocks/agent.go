@@ -13,8 +13,8 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
+	agent "github.com/jonny7/maelstrom/internal/core/agent"
 	commander "github.com/jonny7/maelstrom/internal/core/commander"
-	membership "github.com/jonny7/maelstrom/internal/core/membership"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -56,10 +56,10 @@ func (mr *MockServiceMockRecorder) Leave() *gomock.Call {
 }
 
 // Members mocks base method.
-func (m *MockService) Members() []membership.Member {
+func (m *MockService) Members() []agent.Member {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Members")
-	ret0, _ := ret[0].([]membership.Member)
+	ret0, _ := ret[0].([]agent.Member)
 	return ret0
 }
 

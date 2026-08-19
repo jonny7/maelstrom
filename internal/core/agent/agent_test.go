@@ -1,58 +1,46 @@
 package agent
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/travisjeffery/go-dynaport"
 	"go.uber.org/mock/gomock"
 
 	mock "github.com/jonny7/maelstrom/internal/core/commander/mocks"
-	mockmetrics "github.com/jonny7/maelstrom/internal/core/metrics/mocks"
 	mocklogger "github.com/jonny7/maelstrom/internal/logging/mocks"
 )
 
-func TestRPCAddrErr(t *testing.T) {
-	c := Config{BindAddr: "localhost"}
-	_, err := c.RPCAddr()
-	if err == nil {
-		t.Errorf("invalid host:port. got %s", c.BindAddr)
+// stubMembership records Leave calls and returns a fixed member list.
+type stubMembership struct {
+	leaves  int
+	members []Member
+}
+
+func (s *stubMembership) Members() []Member { return s.members }
+func (s *stubMembership) Leave() error      { s.leaves++; return nil }
+
+func TestAgentMembers(t *testing.T) {
+	s := &stubMembership{members: []Member{{Name: "node-0", Status: "alive"}}}
+	a := agent{membership: s}
+
+	got := a.Members()
+	if len(got) != 1 || got[0].Name != "node-0" {
+		t.Errorf("expected the stub's member list, got %v", got)
 	}
 }
 
-func TestAgent(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+func TestAgentLeave(t *testing.T) {
+	s := &stubMembership{}
+	a := agent{membership: s}
 
-	c := mock.NewMockGenerator(ctrl)
-	p := mock.NewMockProcessor(ctrl)
-	h := mock.NewMockHTTPDoer(ctrl)
-	m := mockmetrics.NewMockMetrics(ctrl)
-	l := mocklogger.NewMockLogger(ctrl)
-	l.EXPECT().Log(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	l.EXPECT().LogWithError(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-
-	var seed string
-	for i := range 3 {
-		ports := dynaport.Get(2)
-		bindAddr := fmt.Sprintf("127.0.0.1:%d", ports[0])
-		if i == 0 {
-			seed = bindAddr
-		}
-
-		cfg := Config{
-			BindAddr:       bindAddr,
-			RPCPort:        ports[1],
-			NodeName:       fmt.Sprintf("node-%d", i),
-			StartJoinAddrs: []string{seed},
-		}
-
-		if _, err := New(cfg, l, c, p, h, m); err != nil {
-			t.Errorf("expected no error: %v", err)
-		}
+	if err := a.Leave(); err != nil {
+		t.Errorf("expected no error: %v", err)
+	}
+	if s.leaves != 1 {
+		t.Errorf("expected one Leave call, got %d", s.leaves)
 	}
 }
+
 func TestAgentStart(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

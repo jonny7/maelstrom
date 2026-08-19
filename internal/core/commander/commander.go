@@ -53,8 +53,6 @@ type Command interface {
 	Vortexes() []Vortex
 	Stop(id uuid.UUID)
 	Start(host string, jobs int, workers int, cbuf int, rbuf int) Vortex
-	Leave(id string) error
-	Join(id string, addr string) error
 }
 
 // Vortexes returns every run, running or finished.
@@ -154,16 +152,6 @@ func (c *Commander) analytics(done chan struct{}, results chan result) {
 			}
 		}
 	}()
-}
-
-// Leave removes the named node from the cluster. No-op until cluster-wide coordination is implemented.
-func (c *Commander) Leave(id string) error {
-	return nil
-}
-
-// Join adds the named node to the cluster. No-op until cluster-wide coordination is implemented.
-func (c *Commander) Join(id, addr string) error {
-	return nil
 }
 
 type result struct {

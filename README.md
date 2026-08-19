@@ -21,7 +21,7 @@ The k8s client warnings on startup are expected outside a cluster — scaling fa
 | API                 | http://localhost:3000/api     |
 | API health          | http://localhost:3000/api/healthz |
 | Prometheus metrics  | http://localhost:2112         |
-| serf / RPC          | 7946 / 7373                   |
+| serf                | 7946                          |
 
 ## Configuration
 
@@ -32,7 +32,7 @@ All configuration is via env vars.
 | `SEED_NODES` | `maelstrom-0.maelstrom-svc.default.svc.cluster.local:7946` | serf addresses to join; set to own address for a single node |
 | `SERF_SERVICE` | `$HOSTNAME:$SERF_PORT` | serf bind host:port |
 | `SERF_PORT` | `7946` | |
-| `RPC_PORT` | `7373` | |
+| `RPC_PORT` | `7373` | advertised to peers in the `rpc_addr` member tag |
 | `NODE_NAME` | `$HOSTNAME` | unique node name in the cluster |
 | `API_HOST` / `API_PORT` | `0.0.0.0` / `3000` | |
 | `UI_HOST` / `UI_PORT` | `0.0.0.0` / `4000` | |

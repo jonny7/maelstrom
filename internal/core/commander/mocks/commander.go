@@ -40,34 +40,6 @@ func (m *MockCommand) EXPECT() *MockCommandMockRecorder {
 	return m.recorder
 }
 
-// Join mocks base method.
-func (m *MockCommand) Join(id, addr string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Join", id, addr)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Join indicates an expected call of Join.
-func (mr *MockCommandMockRecorder) Join(id, addr any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Join", reflect.TypeOf((*MockCommand)(nil).Join), id, addr)
-}
-
-// Leave mocks base method.
-func (m *MockCommand) Leave(id string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Leave", id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Leave indicates an expected call of Leave.
-func (mr *MockCommandMockRecorder) Leave(id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Leave", reflect.TypeOf((*MockCommand)(nil).Leave), id)
-}
-
 // Start mocks base method.
 func (m *MockCommand) Start(host string, jobs, workers, cbuf, rbuf int) commander.Vortex {
 	m.ctrl.T.Helper()
