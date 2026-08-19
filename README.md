@@ -5,6 +5,9 @@ A distributed load-testing tool: nodes cluster over serf, consume or generate ev
 ## Running stand-alone
 
 The only required setting outside k8s is `SEED_NODES` — its default points at the k8s seed node's DNS name, which won't resolve locally. Seed the node with itself:
+Playing around with hex architecture, htmx and gossip for a distributed load test tool. Is this project complete? Absolutely not. Do I remember where this code base when I last used it, no. 
+Should you use it as is, no. But I had fun building it
+
 
 ```sh
 SEED_NODES=127.0.0.1:7946 go run ./cmd/maelstrom
