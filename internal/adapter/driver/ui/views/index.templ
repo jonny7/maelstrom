@@ -104,7 +104,7 @@ templ Index() {
 <h2 class="pl-4 mb-2 text-2xl font-semibold font-display text-gray-900 sm:text-3xl">Overview</h2>
 <div style="height: 300px" class="pl-4 mb-12 h-2/6 w-11/12">
 	<div>
-		<form class="flex items-end">
+		<form hx-get="/chart" hx-target="find select" hx-swap="innerHTML" class="flex items-end">
 			<select hx-get="/chart" hx-target="this" hx-swap="innerHTML"
 					hx-trigger="load, updateChartSelectOption from:body"
 					class="py-3 px-4 pe-9 block w-1/9 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600">

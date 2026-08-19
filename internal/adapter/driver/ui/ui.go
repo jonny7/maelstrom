@@ -97,6 +97,7 @@ func (u UI) setupRoutes(router *chi.Mux) {
 	router.Get("/", u.index)
 	router.Get("/healthz", u.health)
 	router.Get("/nodes", u.nodes)
+	router.Delete("/node/{name}", u.deleteNode)
 	router.Get("/replicas", u.replicas)
 	router.Put("/replicas", u.scaleReplicas)
 	router.Get("/vortex", u.vortexes)
@@ -121,6 +122,15 @@ func (u UI) nodes(w http.ResponseWriter, r *http.Request) {
 	if err := nodes.Nodes(members).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func (u UI) deleteNode(w http.ResponseWriter, r *http.Request) {
+	if err := u.app.DeleteNode(chi.URLParam(r, "name")); err != nil {
+		u.logger.LogWithError(logging.ErrorLevel, "failed to delete node", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (u UI) replicas(w http.ResponseWriter, r *http.Request) {

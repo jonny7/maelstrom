@@ -131,7 +131,7 @@ func Index() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div style=\"height: 300px\" class=\"pl-4 mb-12 h-2/6 w-11/12\"><div><form class=\"flex items-end\"><select hx-get=\"/chart\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load, updateChartSelectOption from:body\" class=\"py-3 px-4 pe-9 block w-1/9 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600\"></select> <button type=\"submit\" class=\"ml-2 focus:outline-none text-white bg-indigo-700 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 font-sm rounded-lg text-sm py-2.5 px-2.5 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-purple-indigo\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><div style=\"height: 300px\" class=\"pl-4 mb-12 h-2/6 w-11/12\"><div><form hx-get=\"/chart\" hx-target=\"find select\" hx-swap=\"innerHTML\" class=\"flex items-end\"><select hx-get=\"/chart\" hx-target=\"this\" hx-swap=\"innerHTML\" hx-trigger=\"load, updateChartSelectOption from:body\" class=\"py-3 px-4 pe-9 block w-1/9 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600\"></select> <button type=\"submit\" class=\"ml-2 focus:outline-none text-white bg-indigo-700 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 font-sm rounded-lg text-sm py-2.5 px-2.5 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-purple-indigo\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -163,29 +163,29 @@ func Index() templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Var17 := `
-				const ctx = document.getElementById('chart');
+	const ctx = document.getElementById('chart');
 
-				const config = {
-					type:
-							'line',
-					animationEasing: 'linear',
-					options: {
-						maintainAspectRatio: false,
-						scales: {
-							x: {
-								stacked: true,
-							},
-							y: {
-								stacked: true
-							}
-						}
-					},
-					data: {
-						labels: [],
-						datasets: []
-					}
-				};
-				new Chart(ctx, config);
+	const config = {
+		type:
+				'line',
+		animationEasing: 'linear',
+		options: {
+			maintainAspectRatio: false,
+			scales: {
+				x: {
+					stacked: true,
+				},
+				y: {
+					stacked: true
+				}
+			}
+		},
+		data: {
+			labels: [],
+			datasets: []
+		}
+	};
+	new Chart(ctx, config);
 	//
 	// {
 	//     type: 'bar',

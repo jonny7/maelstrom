@@ -14,30 +14,34 @@ import (
 	"github.com/jonny7/maelstrom/internal/logging"
 )
 
-// Scaler is the driven port for resizing the cluster of Maelstrom nodes.
-type Scaler interface {
+// Cluster is the driven port for managing the cluster of Maelstrom nodes.
+type Cluster interface {
 	Scale(replicas int) error
+	DeleteNode(node string) error
 }
 
 // ErrInvalidReplicas rejects a Scale request for a negative replica count.
 var ErrInvalidReplicas = errors.New("replicas must be zero or greater")
 
+// ErrMissingNode rejects a DeleteNode request without a node name.
+var ErrMissingNode = errors.New("node name is required")
+
 type App struct {
-	agent  agent.Service
-	scaler Scaler
+	agent   agent.Service
+	cluster Cluster
 }
 
 // New wires the core services into an App. Configuration and all driven ports
 // (generator, processor, client, metrics, scaler) are constructed by the caller.
-func New(cfg agent.Config, generator commander.Generator, processor commander.Processor, client commander.HTTPDoer, logger logging.Logger, metrics metrics.Metrics, scaler Scaler) (App, error) {
+func New(cfg agent.Config, generator commander.Generator, processor commander.Processor, client commander.HTTPDoer, logger logging.Logger, metrics metrics.Metrics, cluster Cluster) (App, error) {
 	a, err := agent.New(cfg, logger, generator, processor, client, metrics)
 	if err != nil {
 		return App{}, fmt.Errorf("unable to initialize agent: %w", err)
 	}
 
 	return App{
-		agent:  a,
-		scaler: scaler,
+		agent:   a,
+		cluster: cluster,
 	}, nil
 }
 
@@ -66,5 +70,13 @@ func (a App) Scale(replicas int) error {
 	if replicas < 0 {
 		return ErrInvalidReplicas
 	}
-	return a.scaler.Scale(replicas)
+	return a.cluster.Scale(replicas)
+}
+
+// DeleteNode kills the named node; in k8s the StatefulSet replaces it.
+func (a App) DeleteNode(name string) error {
+	if name == "" {
+		return ErrMissingNode
+	}
+	return a.cluster.DeleteNode(name)
 }
