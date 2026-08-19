@@ -41,6 +41,20 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// Leave mocks base method.
+func (m *MockService) Leave() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Leave")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Leave indicates an expected call of Leave.
+func (mr *MockServiceMockRecorder) Leave() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Leave", reflect.TypeOf((*MockService)(nil).Leave))
+}
+
 // Members mocks base method.
 func (m *MockService) Members() []membership.Member {
 	m.ctrl.T.Helper()

@@ -10,7 +10,3 @@ func NewFake() Fake {
 func (f Fake) Scale(replicas int) error {
 	return nil
 }
-
-func (f Fake) DeleteNode(node string) error {
-	return nil
-}

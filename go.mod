@@ -1,6 +1,6 @@
 module github.com/jonny7/maelstrom
 
-go 1.22.0
+go 1.26.6
 
 require (
 	github.com/a-h/templ v0.2.476

@@ -97,7 +97,6 @@ func (u UI) setupRoutes(router *chi.Mux) {
 	router.Get("/", u.index)
 	router.Get("/healthz", u.health)
 	router.Get("/nodes", u.nodes)
-	router.Delete("/node/{name}", u.deleteNode)
 	router.Get("/replicas", u.replicas)
 	router.Put("/replicas", u.scaleReplicas)
 	router.Get("/vortex", u.vortexes)
@@ -124,18 +123,20 @@ func (u UI) nodes(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u UI) deleteNode(w http.ResponseWriter, r *http.Request) {
-	if err := u.app.DeleteNode(chi.URLParam(r, "name")); err != nil {
-		u.logger.LogWithError(logging.ErrorLevel, "failed to delete node", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+// aliveCount ignores members lingering as left or failed in serf's member list.
+func aliveCount(members []dto.Member) int {
+	n := 0
+	for _, m := range members {
+		if m.Status == "alive" {
+			n++
+		}
 	}
-	w.WriteHeader(http.StatusAccepted)
+	return n
 }
 
 func (u UI) replicas(w http.ResponseWriter, r *http.Request) {
 	members := u.app.Membership()
-	if err := replicas.Replicas(len(members)).Render(r.Context(), w); err != nil {
+	if err := replicas.Replicas(aliveCount(members)).Render(r.Context(), w); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
@@ -143,7 +144,7 @@ func (u UI) replicas(w http.ResponseWriter, r *http.Request) {
 func (u UI) scaleReplicas(w http.ResponseWriter, r *http.Request) {
 	v, err := strconv.Atoi(r.FormValue("replicas"))
 	if err != nil {
-		if re := replicas.ReplicasWithError(len(u.app.Membership()), "unable to parse input").Render(r.Context(), w); re != nil {
+		if re := replicas.ReplicasWithError(aliveCount(u.app.Membership()), "unable to parse input").Render(r.Context(), w); re != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -151,7 +152,7 @@ func (u UI) scaleReplicas(w http.ResponseWriter, r *http.Request) {
 
 	err = u.app.Scale(v)
 	if err != nil {
-		if re := replicas.ReplicasWithError(len(u.app.Membership()), err.Error()).Render(r.Context(), w); re != nil {
+		if re := replicas.ReplicasWithError(aliveCount(u.app.Membership()), err.Error()).Render(r.Context(), w); re != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return

@@ -1,8 +1,9 @@
 package nodes
 
 import (
+	"fmt"
+
 	"github.com/jonny7/maelstrom/internal/application/dto"
- 	"fmt"
 )
 
 templ status(status string) {
@@ -32,18 +33,6 @@ templ Nodes(nodes []dto.Member) {
 								</div>
 								<p class="mt-1 text-gray-500 text-sm truncate">{ node.Addr }:{ node.Port }</p>
 								<span class="flex-shrink-0 inline-block px-2 py-0.5 text-white-200 text-xs font-medium bg-purple-300 rounded-full">{ node.Tags }</span>
-							</div>
-						</div>
-						<div>
-							<div class="-mt-px flex divide-x divide-gray-200">
-								<div class="w-0 flex-1 flex">
-									<button hx-delete={ fmt.Sprintf("/node/%s", node.Name) } hx-confirm={ fmt.Sprintf("Delete %s?", node.Name) } hx-swap="none" class="relative -mr-px w-0 flex-1 inline-flex items-center justify-center py-4 text-sm text-white bg-red-400 font-medium border border-transparent rounded-b-lg">
-										<svg class="w-5 h-5 text-white-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"></path>
-										</svg>
-										<span class="ml-3">Delete</span>
-									</button>
-								</div>
 							</div>
 						</div>
 					</li>

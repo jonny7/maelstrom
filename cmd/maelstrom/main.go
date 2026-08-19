@@ -63,11 +63,11 @@ func run() error {
 	h := &http.Client{Timeout: 1500 * time.Millisecond}
 
 	// scale through k8s when running in a cluster, otherwise fall back to the fake
-	var cluster application.Cluster
-	cluster, err = k8s.New()
+	var scaler application.Scaler
+	scaler, err = k8s.New()
 	if err != nil {
-		logger.LogWithError(logging.WarningLevel, "k8s unavailable, falling back to fake cluster", err)
-		cluster = k8s.NewFake()
+		logger.LogWithError(logging.WarningLevel, "k8s unavailable, falling back to fake scaler", err)
+		scaler = k8s.NewFake()
 	}
 
 	var agentCfg agent.Config
@@ -75,7 +75,7 @@ func run() error {
 		return fmt.Errorf("agent config failed to load: %w", err)
 	}
 
-	app, err := application.New(agentCfg, g, proc, h, logger, m, cluster)
+	app, err := application.New(agentCfg, g, proc, h, logger, m, scaler)
 	if err != nil {
 		return err
 	}
@@ -101,6 +101,10 @@ func run() error {
 		select {
 		case msg := <-sig:
 			logger.Log(logging.InfoLevel, fmt.Sprintf("shutting down from signal: %v", msg))
+			// tell the cluster we're leaving so peers mark us left instead of failed
+			if err = app.Leave(); err != nil {
+				logger.LogWithError(logging.ErrorLevel, "failed to leave cluster gracefully", err)
+			}
 			close(done)
 			return nil
 		case err = <-errs:

@@ -17,12 +17,12 @@ type Config struct {
 	StatefulSet string `env:"STATEFULSET" envDefault:"maelstrom"`
 }
 
-type Cluster struct {
+type Scaler struct {
 	client *kubernetes.Clientset
 	cfg    Config
 }
 
-func New() (*Cluster, error) {
+func New() (*Scaler, error) {
 	var cfg Config
 	if err := env.ParseWithOptions(&cfg, env.Options{Prefix: "K8S_"}); err != nil {
 		return nil, fmt.Errorf("k8s config failed to load: %w", err)
@@ -37,14 +37,14 @@ func New() (*Cluster, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating k8 clientset: %w", err)
 	}
-	return &Cluster{
+	return &Scaler{
 		client: clientSet,
 		cfg:    cfg,
 	}, nil
 }
 
 // Scale resizes the Maelstrom StatefulSet to the given replica count.
-func (s *Cluster) Scale(replicas int) error {
+func (s *Scaler) Scale(replicas int) error {
 	sets := s.client.AppsV1().StatefulSets(s.cfg.Namespace)
 
 	cur, err := sets.GetScale(context.Background(), s.cfg.StatefulSet, metav1.GetOptions{})
@@ -57,14 +57,6 @@ func (s *Cluster) Scale(replicas int) error {
 
 	if _, err = sets.UpdateScale(context.Background(), s.cfg.StatefulSet, &sc, metav1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("updating scale: %w", err)
-	}
-	return nil
-}
-
-// DeleteNode deletes the named pod; the StatefulSet controller replaces it.
-func (s *Cluster) DeleteNode(node string) error {
-	if err := s.client.CoreV1().Pods(s.cfg.Namespace).Delete(context.Background(), node, metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("deleting node %s: %w", node, err)
 	}
 	return nil
 }

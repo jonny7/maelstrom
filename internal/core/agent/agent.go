@@ -32,6 +32,7 @@ type Service interface {
 	Start(host string, jobs, workers int, cbuf, rbuf int)
 	Stop(id uuid.UUID)
 	Vortexes() []commander.Vortex
+	Leave() error
 }
 
 func (a *agent) Start(host string, jobs, workers int, cbuf, rbuf int) {
@@ -46,6 +47,12 @@ func (a *agent) Stop(id uuid.UUID) {
 
 func (a *agent) Members() []membership.Member {
 	return a.membership.Members()
+}
+
+// Leave announces this node's departure to the cluster so peers mark it
+// left immediately instead of failed.
+func (a *agent) Leave() error {
+	return a.membership.Leave()
 }
 
 func (a *agent) Vortexes() []commander.Vortex {
